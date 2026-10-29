@@ -1,0 +1,14 @@
+executable              = benchmark.sh
+
+log                     = benchmark.log
+output                  = benchmark.out
+error                   = benchmark.err
+
+request_cpus = 12
+request_memory = 500 GB
+request_disk = 50 GB
+
+stream_output = TRUE
+stream_error = TRUE
+
+queue

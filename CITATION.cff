@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "LinearSolverBenchmarks.jl"
+authors:
+  - family-names: "Osewold"
+    given-names: "Marieke"
+    email: osewold@wias-berlin.de
+    affiliation: Weierstrass Institute Berlin
+version: 0.1.0
+date-released: 2026-08-06
+repository-code: "https://github.com/mariekeosw/LinearSolverBenchmarks.jl"
