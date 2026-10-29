@@ -53,9 +53,7 @@ function load_benchmarks(filenames...; fields)
 
     for (filename, d) in zip(filenames, data), field in fields
         haskey(d, field) || error(
-            "File $filename does not contain `$field`. " *
-                "Files created before iteration counts were recorded have to be regenerated " *
-                "with `benchmark` (scripts/run_benchmarks.jl)."
+            "File $filename does not contain `$field`."
         )
     end
 

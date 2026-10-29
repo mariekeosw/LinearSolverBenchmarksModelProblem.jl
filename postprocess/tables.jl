@@ -7,8 +7,7 @@ Usage:
     include("postprocess/tables.jl")
     Tables.export_table("results/sym_direct.jld2", "sym_direct.tex")
 
-Requires \usepackage{booktabs} and \usepackage{longtable}. Files without iteration counts
-(results created before they were recorded) give runtime columns only.
+Requires \usepackage{booktabs} and \usepackage{longtable}.
 =#
 
 using JLD2

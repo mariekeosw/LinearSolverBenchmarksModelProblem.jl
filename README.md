@@ -16,13 +16,11 @@ All solvers are accessed through [`LinearSolve.jl`](https://github.com/SciML/Lin
 | Category | Methods and implementations |
 | --- | --- |
 | Direct solvers | UMFPACK and KLU from SuiteSparse, MKLPardiso through [`Pardiso.jl`](https://github.com/JuliaSparse/Pardiso.jl), [`Sparspak.jl`](https://github.com/PetrKryslUCSD/Sparspak.jl) |
-| Krylov methods | CG (symmetric), BiCGSTAB, CGS and GMRES (nonsymmetric) from [`Krylov.jl`](https://github.com/JuliaSmoothOptimizers/Krylov.jl) |
+| Krylov methods | CG (symmetric), BiCGSTAB and GMRES (nonsymmetric) from [`Krylov.jl`](https://github.com/JuliaSmoothOptimizers/Krylov.jl) |
 | Incomplete factorizations | ILU(0) from [`ILUZero.jl`](https://github.com/mcovalt/ILUZero.jl), threshold ILU (drop tolerances 0.01 and 0.1) from [`IncompleteLU.jl`](https://github.com/haampie/IncompleteLU.jl) |
 | Algebraic multigrid | Ruge–Stüben and smoothed aggregation from [`AMGCLWrap.jl`](https://github.com/j-fu/AMGCLWrap.jl) (with SPAI(0) or ILU(0) relaxation), [`AlgebraicMultigrid.jl`](https://github.com/JuliaLinearAlgebra/AlgebraicMultigrid.jl) and [`LinearSolvePyAMG.jl`](https://github.com/SciML/LinearSolve.jl/tree/main/lib/LinearSolvePyAMG) |
 
 The linear solver runtime (setup + solve) is measured with `@belapsed` from [`BenchmarkTools.jl`](https://github.com/JuliaCI/BenchmarkTools.jl). The number of Krylov iterations, the return code, the relative residual and the mean of the solution are taken from the solution of the last timed sample (`src/benchmark.jl`).
-
-**CGS:** only unpreconditioned CGS is benchmarked. In `LinearSolve.jl` v5.18.2, `KrylovJL(KrylovAlg = Krylov.cgs!, precs = ...)` does not pass the preconditioner to `Krylov.cgs!`. The preconditioned CGS entries in the existing files `results/nsym_*.jld2` were therefore computed without preconditioning.
 
 ## Structure
 
@@ -35,7 +33,7 @@ src/
 scripts/run_benchmarks.jl                 all benchmarks of the paper
 postprocess/figures.jl                    plot_runtimes, plot_iterations
 postprocess/tables.jl                     LaTeX tables
-results/                                  benchmark results (.jld2)
+results/                                  benchmark results (.jld2), created by scripts/run_benchmarks.jl
 benchmark.sh, benchmark.sub               job script and HTCondor submit file
 ```
 
@@ -64,9 +62,9 @@ returns `(problem_size, runtime, niters, retcode, residual, testval)`. The targe
 benchmark("sym_cg_ilu_example.jld2", sym_solver_configs_cg_ilu; symmetric = true, dimensions = [1, 2, 3], refinement_max = 10)
 ```
 
-The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and overwrites the files in `results/` (the largest problem sizes take several days).
+The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and writes the results to `results/` (the largest problem sizes take several days).
 
-A result file contains `labels`, `dimensions`, `refinement`, `problem_sizes`, `tlinsolves` (runtimes), `niters`, `retcodes`, `residuals`, `tests` and `environment` (Julia version, CPU and thread settings). Results are dictionaries with keys `(dimension, label)`. The files currently in `results/` were created before iteration counts were recorded and contain runtimes only.
+A result file contains `labels`, `dimensions`, `refinement`, `problem_sizes`, `tlinsolves` (runtimes), `niters`, `retcodes`, `residuals`, `tests` and `environment` (Julia version, CPU and thread settings). Results are dictionaries with keys `(dimension, label)`.
 
 ### Figures
 
@@ -110,7 +108,7 @@ Figures.plot_runtimes(r("nsym_direct_pardiso"), r("nsym_krylov"), r("nsym_krylov
     save_figure = true, title_figure = "nsym_mp_krylov_3d.pdf")
 ```
 
-The iteration figures use the same calls with `Figures.plot_iterations` (result files with iteration counts required).
+The iteration figures use the same calls with `Figures.plot_iterations`.
 
 ### Tables
 

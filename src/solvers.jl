@@ -62,16 +62,9 @@ const sym_solver_configs_cg_pyamg = (
 ################################################################################
 # Krylov Methods without preconditioning
 const nsym_solver_configs_krylov = (
-    SolverConfig("CGS", KrylovJL(KrylovAlg = Krylov.cgs!)),
     SolverConfig("BiCGSTAB", KrylovJL_BICGSTAB()),
     SolverConfig("GMRES", KrylovJL_GMRES()),
 )
-
-# Note on CGS: only unpreconditioned CGS is benchmarked. In LinearSolve.jl v5.18.2,
-# `KrylovJL(KrylovAlg = Krylov.cgs!, precs = ...)` does not pass the preconditioner to
-# Krylov.cgs! (the CgsWorkspace falls into the generic branch of `solve!` in
-# src/iterative_wrappers.jl that calls `krylov_solve!` without M and N). Preconditioned
-# CGS configurations therefore ran without preconditioning and were removed.
 
 # Krylov Methods with ILU preconditioning from IncompleteLU.jl and ILUZero.jl
 const nsym_solver_configs_krylov_ilu = (

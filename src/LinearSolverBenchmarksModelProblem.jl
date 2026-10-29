@@ -4,7 +4,6 @@ using LinearAlgebra: LinearAlgebra, BLAS, Diagonal, I, kron, norm
 using SparseArrays: spdiagm
 using Random: MersenneTwister
 using LinearSolve
-using Krylov: Krylov
 using Pardiso: Pardiso    # loads the MKLPardisoFactorize extension of LinearSolve
 using Sparspak: Sparspak  # loads the SparspakFactorization extension of LinearSolve
 using ILUZero: ilu0
