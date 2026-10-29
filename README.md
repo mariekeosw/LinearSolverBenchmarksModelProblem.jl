@@ -9,7 +9,7 @@ This repository contains the code, the benchmark results and the post-processing
 The matrices have the nearest-neighbor structure of a low-order discretization of $-\Delta u + \delta u = f$ on $(0,1)^d$ with homogeneous Neumann boundary conditions and $\delta = 10^{-2}$ (`src/matrices.jl`):
 
 - symmetric: $A_\mathrm{sym} = L_{d,n} + \delta I$ (`fdmatrix_sym`),
-- nonsymmetric: $A_\mathrm{nsym} = L_{d,n} D + \delta I$ with a random diagonal $D$, $d_i \in \{0.8, 0.801, \dots, 1.2\}$, fixed seed (`fdmatrix`).
+- nonsymmetric: $A_\mathrm{nsym} = L_{d,n} D + \delta I$ with a random diagonal $D$, $d_i \in \{0.8, 0.801, \dots, 1.2\}$, fixed seed (`fdmatrix_nsym`).
 
 All solvers are accessed through [`LinearSolve.jl`](https://github.com/SciML/LinearSolve.jl) (`src/solvers.jl`):
 

@@ -7,7 +7,7 @@
 # mean of the solution are taken from the solution of the last timed sample.
 function run_single(alg; symmetric = true, dimension = 2, refinement = 5, rng_seed = 123)
     target_problem_size = 10 * 2^refinement
-    A = symmetric ? fdmatrix_sym(target_problem_size; dim = dimension) : fdmatrix(target_problem_size; dim = dimension)
+    A = symmetric ? fdmatrix_sym(target_problem_size; dim = dimension) : fdmatrix_nsym(target_problem_size; dim = dimension)
 
     rng = MersenneTwister(rng_seed)
     N = size(A, 1)

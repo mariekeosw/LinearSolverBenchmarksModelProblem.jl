@@ -18,7 +18,7 @@ include("matrices.jl")
 include("solvers.jl")
 include("benchmark.jl")
 
-export fdmatrix_sym, fdmatrix
+export fdmatrix_sym, fdmatrix_nsym
 export run_single, benchmark
 export SolverConfig
 export solver_configs_direct, solver_configs_direct_pardiso

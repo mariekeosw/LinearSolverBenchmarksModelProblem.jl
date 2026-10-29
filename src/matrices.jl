@@ -28,7 +28,7 @@ end
 # Creates a reproducible non-symmetric matrix.
 # The diagonal entries of D are randomly selected from
 # {0.8, 0.801, ..., 1.2} using a fixed random seed.
-function fdmatrix(N; dim = 2, Tv = Float64, δ = 1.0e-2, skew = 0.2, rng_seed = 123)
+function fdmatrix_nsym(N; dim = 2, Tv = Float64, δ = 1.0e-2, skew = 0.2, rng_seed = 123)
     n = N^(1 / dim) |> ceil |> Int
     rng = MersenneTwister(rng_seed)
     diagonal_entries = rand(rng, (1 - skew):0.001:(1 + skew), n^dim)
