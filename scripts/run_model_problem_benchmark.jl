@@ -20,7 +20,7 @@ module ModelProblemBenchmarkRun
 using Random                               # matrix construction: MersenneTwister(rng_seed)
 using SparseArrays                         # matrix construction: spdiagm
 using LinearAlgebra                        # matrix construction: I, issymmetric
-using LinearSolverBenchmarks: ModelProblem # solver configurations
+using LinearSolverBenchmarksModelProblem: ModelProblem # solver configurations
 using LinearSolve                          # linear problem definition and solve
 using BenchmarkTools                       # benchmark data
 using JLD2                                 # export benchmark data
@@ -114,9 +114,12 @@ function main(;
         end
         # Solve
         tlinsolve_solve = @elapsed begin
-            solution = solve!(cache).u
-
+            sol = solve!(cache)
         end
+        solution = sol.u
+        # Number of Krylov iterations (0 for direct solvers and PyAMG, which do not report it)
+        niters = sol.iters
+        retcode = string(sol.retcode)
 
         tlinsolve = tlinsolve_setup + tlinsolve_solve
 
@@ -128,10 +131,15 @@ function main(;
         # Summarize setup (factorization or preconditioner construction) and solve time,
         # since separating both phases would require an additional benchmark with a pre-initialized cache.
         # Disable repeated GarbageCollection pauses during the timing loop of many small benchmarks.
+        # The Ref keeps the LinearSolution of the last sample to read the iteration count
+        # and the return code; storing it does not change the measured runtime.
+        sol_ref = Ref{Any}(nothing)
         tlinsolve = @belapsed begin
             cache = init($prob, $strategy)
-            solve!(cache)
+            $sol_ref[] = solve!(cache)
         end samples = 10 evals = 1 seconds = 0.5 gctrial = false #gcsample = false
+        niters = sol_ref[].iters
+        retcode = string(sol_ref[].retcode)
 
         println("benchmark took ", time() - t, " seconds")
 
@@ -156,7 +164,7 @@ function main(;
         error("Unknown benchmark strategy = $benchmark_strategy")
     end
 
-    return problem_size, testval, residual, tlinsolve, tlinsolve_setup, tlinsolve_solve
+    return problem_size, testval, residual, tlinsolve, tlinsolve_setup, tlinsolve_solve, niters, retcode
 end # function main
 
 
@@ -233,6 +241,8 @@ function benchmark(
     problem_sizes = Dict{BenchmarkKey, Vector{Int}}()
     tests = Dict{BenchmarkKey, Vector{Float64}}()
     residuals = Dict{BenchmarkKey, Vector{Float64}}()
+    niters = Dict{BenchmarkKey, Vector{Int}}()
+    retcodes = Dict{BenchmarkKey, Vector{String}}()
 
     ################################################################################
     # Benchmark loop
@@ -254,6 +264,8 @@ function benchmark(
             problem_sizes_value = Vector{Int}(undef, length(refinement))
             tests_value = Vector{Float64}(undef, length(refinement))
             residuals_value = Vector{Float64}(undef, length(refinement))
+            niters_value = Vector{Int}(undef, length(refinement))
+            retcodes_value = Vector{String}(undef, length(refinement))
 
             for j in eachindex(refinement)
                 println("refinement = $(refinement[j])")
@@ -266,12 +278,14 @@ function benchmark(
                 problem_size = 0
                 testval = NaN
                 residual = NaN
+                niter = -1
+                retcode = "failed"
 
                 if benchmark_strategy == :elapsed
 
                     try
                         wt = @elapsed begin
-                            problem_size, testval, residual, tlinsolve, tlinsolve_setup, tlinsolve_solve = main(
+                            problem_size, testval, residual, tlinsolve, tlinsolve_setup, tlinsolve_solve, niter, retcode = main(
                                 Documentation = false,
                                 symmetric = symmetric,
                                 dimension = dimension,
@@ -287,7 +301,7 @@ function benchmark(
                 elseif benchmark_strategy == :belapsed
 
                     try
-                        problem_size, testval, residual, tlinsolve, tlinsolve_setup, tlinsolve_solve = main(
+                        problem_size, testval, residual, tlinsolve, tlinsolve_setup, tlinsolve_solve, niter, retcode = main(
                             Documentation = false,
                             symmetric = symmetric,
                             dimension = dimension,
@@ -312,6 +326,8 @@ function benchmark(
                 problem_sizes_value[j] = problem_size
                 tests_value[j] = testval
                 residuals_value[j] = residual
+                niters_value[j] = niter
+                retcodes_value[j] = retcode
 
                 println("walltime = $wt")
                 println("tlinsolve = $tlinsolve")
@@ -320,6 +336,8 @@ function benchmark(
                 println("problem_size = $problem_size")
                 println("testval = $testval")
                 println("relative residual = $residual")
+                println("iterations = $niter")
+                println("retcode = $retcode")
                 println("*** done\n")
             end
 
@@ -331,10 +349,14 @@ function benchmark(
             problem_sizes[key] = problem_sizes_value
             tests[key] = tests_value
             residuals[key] = residuals_value
+            niters[key] = niters_value
+            retcodes[key] = retcodes_value
         end
     end
 
-    @save filename labels dimensions refinement problem_sizes tests residuals walltimes tlinsolves tlinsolve_setups tlinsolve_solves
+    environment = environment_info()
+
+    @save filename labels dimensions refinement problem_sizes tests residuals walltimes tlinsolves tlinsolve_setups tlinsolve_solves niters retcodes environment
 
     return nothing
 end # function benchmark
@@ -438,6 +460,25 @@ function several_benchmarks(; benchmark_strategy = :elapsed)
 
     return nothing
 end # several_benchmarks
+
+################################################################################
+# Benchmark Environment
+################################################################################
+# Records the Julia version, CPU and thread settings, which are stored with the
+# benchmark results (needed to report the setup in the paper).
+function environment_info()
+    return Dict(
+        "julia_version" => string(VERSION),
+        "cpu_name" => Sys.CPU_NAME,
+        "cpu_threads" => string(Sys.CPU_THREADS),
+        "julia_threads" => string(Threads.nthreads()),
+        "blas_threads" => string(LinearAlgebra.BLAS.get_num_threads()),
+        "blas_config" => string(LinearAlgebra.BLAS.get_config()),
+        "OMP_NUM_THREADS" => get(ENV, "OMP_NUM_THREADS", "unset"),
+        "MKL_NUM_THREADS" => get(ENV, "MKL_NUM_THREADS", "unset"),
+        "hostname" => gethostname(),
+    )
+end
 
 ################################################################################
 # Matrix Construction
