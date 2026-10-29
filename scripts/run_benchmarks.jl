@@ -1,0 +1,44 @@
+#=
+Runs all benchmarks of the paper and writes one .jld2 file per benchmark to results/.
+
+    julia --project scripts/run_benchmarks.jl
+
+The largest problem sizes take several days. To run a single benchmark, use `benchmark`
+directly (see README).
+=#
+
+using LinearSolverBenchmarksModelProblem
+
+# (file name, solver configurations, symmetric, maximal refinement, dimensions)
+const BENCHMARKS = [
+    # Symmetric problem
+    ("sym_direct", solver_configs_direct, true, 15, [1, 2, 3]),
+    ("sym_direct_pardiso", solver_configs_direct_pardiso, true, 20, [1, 2, 3]),
+    ("sym_cg", sym_solver_configs_cg, true, 22, [1, 2, 3]),
+    ("sym_cg_ilu", sym_solver_configs_cg_ilu, true, 22, [1, 2, 3]),
+    ("sym_cg_amgcl", sym_solver_configs_cg_amgcl, true, 22, [1, 2, 3]),
+    ("sym_cg_amg_1d", sym_solver_configs_cg_amg, true, 20, [1]),
+    ("sym_cg_amg_23d", sym_solver_configs_cg_amg, true, 22, [2, 3]),
+    ("sym_cg_pyamg", sym_solver_configs_cg_pyamg, true, 22, [1, 2, 3]),
+    # Nonsymmetric problem
+    ("nsym_direct", solver_configs_direct, false, 15, [1, 2, 3]),
+    ("nsym_direct_pardiso", solver_configs_direct_pardiso, false, 20, [1, 2, 3]),
+    ("nsym_krylov", nsym_solver_configs_krylov, false, 22, [1, 2, 3]),
+    ("nsym_krylov_ilu", nsym_solver_configs_krylov_ilu, false, 22, [1, 2, 3]),
+    ("nsym_krylov_amgcl_spai0", nsym_solver_configs_krylov_amgcl_spai0, false, 22, [1, 2, 3]),
+    ("nsym_krylov_amgcl_ilu0_1d", nsym_solver_configs_krylov_amgcl_ilu0, false, 20, [1]),
+    ("nsym_krylov_amgcl_ilu0_23d", nsym_solver_configs_krylov_amgcl_ilu0, false, 22, [2, 3]),
+    ("nsym_krylov_amg_1d", nsym_solver_configs_krylov_amg, false, 20, [1]),
+    ("nsym_krylov_amg_23d", nsym_solver_configs_krylov_amg, false, 22, [2, 3]),
+    ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3]),
+]
+
+mkpath("results")
+
+for (name, configs, symmetric, refinement_max, dimensions) in BENCHMARKS
+    # Small warm-up run so that compilation time is not included in the measurements
+    benchmark(tempname() * ".jld2", configs; symmetric, dimensions, refinement_max = 0)
+
+    t = @elapsed benchmark(joinpath("results", name * ".jld2"), configs; symmetric, dimensions, refinement_max)
+    @info "$name took $(round(t; digits = 1)) seconds"
+end

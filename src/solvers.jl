@@ -9,16 +9,6 @@ end
 ################################################################################
 # Solver Configurations: Symmetric and Non-Symmetric Problem
 ################################################################################
-# Direct solver - new pure Julia implementations
-const solver_configs_direct_new = (
-    SolverConfig("PureKLU", PureKLUFactorization()),
-    SolverConfig("SupernodalLU", SupernodalLUFactorization()),
-    SolverConfig("UMFPACK", UMFPACKFactorization()),
-    SolverConfig("KLU", KLUFactorization()),
-    SolverConfig("MKLPardiso", MKLPardisoFactorize()),
-    SolverConfig("Sparspak", SparspakFactorization()),
-)
-
 # Direct solver from LinearSolve.jl and Pardiso.jl
 const solver_configs_direct = (
     SolverConfig("UMFPACK", UMFPACKFactorization()),
@@ -74,15 +64,6 @@ const sym_solver_configs_cg_pyamg = (
 const nsym_solver_configs_krylov = (
     SolverConfig("CGS", KrylovJL(KrylovAlg = Krylov.cgs!)),
     SolverConfig("BiCGSTAB", KrylovJL_BICGSTAB()),
-    SolverConfig("GMRES", KrylovJL_GMRES()),
-)
-
-const nsym_solver_configs_cgs_bicgstab = (
-    SolverConfig("CGS", KrylovJL(KrylovAlg = Krylov.cgs!)),
-    SolverConfig("BiCGSTAB", KrylovJL_BICGSTAB()),
-)
-
-const nsym_solver_configs_gmres = (
     SolverConfig("GMRES", KrylovJL_GMRES()),
 )
 

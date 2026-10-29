@@ -1,6 +1,32 @@
+module Figures
+
 #=
-Shared helpers for the model-problem figures.
-Included by fig1_runtimes.jl and fig2_iterations.jl; not meant to be used on its own.
+Figures of linear solver runtimes (plot_runtimes) and Krylov iteration counts (plot_iterations)
+over the number of unknowns N.
+
+Usage (Plots.jl in your global environment):
+    using Plots
+    include("postprocess/figures.jl")
+    Figures.plot_runtimes(
+        "results/sym_direct_pardiso.jld2", "results/sym_cg_ilu.jld2";
+        Plotter = Plots,
+        algorithms = ["MKLPardiso", "CG-ILU-drop-0.01", "CG-ILU-drop-0.1", "CG-ILU0"],
+        save_figure = true,
+        title_figure = "sym_mp_cg_ilu.pdf",
+    )
+    Figures.plot_iterations(<same files and keyword arguments>)
+
+Keyword arguments of both functions:
+- any number of .jld2 files; their results are merged
+- `algorithms`: algorithms to plot, in this order (defines the colors, so the same list
+  gives the same colors in both functions); `nothing` plots all
+- `active_dimensions`: e.g. 3 or [2, 3]; `nothing` plots all dimensions in the files
+- `references`: reference lines factor * N^exponent as (exponent, factor) pairs
+- `ylims`, `yticks`, `xlims`: axis settings
+
+Direct solvers and PyAMG do not report iteration counts and are skipped in plot_iterations.
+Points where a Krylov method did not report convergence are marked with a cross.
+The calls for all figures of the paper are listed in the README.
 =#
 
 using JLD2
@@ -29,7 +55,7 @@ function load_benchmarks(filenames...; fields)
         haskey(d, field) || error(
             "File $filename does not contain `$field`. " *
                 "Files created before iteration counts were recorded have to be regenerated " *
-                "with scripts/run_model_problem_benchmark.jl."
+                "with `benchmark` (scripts/run_benchmarks.jl)."
         )
     end
 
@@ -190,3 +216,128 @@ function reference_linestyle(e)
     isapprox(e, 3 / 2) && return :dashdotdot
     return :dashdot # e.g. 4/3
 end
+
+################################################################################
+# Runtimes
+################################################################################
+function plot_runtimes(
+        filenames...;
+        Plotter = nothing,
+        algorithms = nothing,
+        active_dimensions = nothing,
+        references = [(1, 1.0e-4), (1, 1.0e-7), (2, 1.0e-9)],
+        ylims = (1.0e-4, 1.0e4),
+        yticks = 10.0 .^ (-4:2:4),
+        xlims = DEFAULT_XLIMS,
+        save_figure = false,
+        title_figure = nothing,
+    )
+
+    if isnothing(Plotter)
+        error("Please add Plots.jl in local environment and use Plotter = Plots")
+    end
+
+    labels, dimensions, data = load_benchmarks(filenames...; fields = ("problem_sizes", "tlinsolves"))
+    labels = select_labels(labels, algorithms)
+    dimensions = select_dimensions(dimensions, active_dimensions)
+
+    problem_sizes = data["problem_sizes"]
+    tlinsolves = data["tlinsolves"]
+
+    p = base_plot(Plotter; ylabel = L"\mathrm{runtime\ [s]}", ylims, yticks, xlims)
+
+    for dimension in dimensions, (i, label) in enumerate(labels)
+        key = (dimension, label)
+        haskey(tlinsolves, key) || continue
+
+        # Problem size 0 or NaN runtime: the run failed or was not performed (e.g. GMRES with PyAMG)
+        valid = (problem_sizes[key] .> 0) .& isfinite.(tlinsolves[key])
+
+        plot_series!(p, Plotter, problem_sizes[key][valid], tlinsolves[key][valid], COLORS[i], linestyle_for(dimension, dimensions))
+    end
+
+    add_legend!(p, Plotter, labels, dimensions)
+    add_references!(p, Plotter, references, xlims)
+
+    if save_figure
+        Plotter.savefig(p, title_figure)
+    end
+
+    return p
+end
+
+################################################################################
+# Iteration counts
+################################################################################
+function plot_iterations(
+        filenames...;
+        Plotter = nothing,
+        algorithms = nothing,
+        active_dimensions = nothing,
+        references = [],
+        ylims = :auto,
+        yticks = :auto,
+        xlims = DEFAULT_XLIMS,
+        save_figure = false,
+        title_figure = nothing,
+    )
+
+    if isnothing(Plotter)
+        error("Please add Plots.jl in local environment and use Plotter = Plots")
+    end
+
+    labels, dimensions, data = load_benchmarks(filenames...; fields = ("problem_sizes", "niters", "retcodes"))
+    labels = select_labels(labels, algorithms)
+    dimensions = select_dimensions(dimensions, active_dimensions)
+
+    problem_sizes = data["problem_sizes"]
+    niters = data["niters"]
+    retcodes = data["retcodes"]
+
+    p = base_plot(Plotter; ylabel = L"\mathrm{number\ of\ iterations}", ylims, yticks, xlims)
+
+    without_iterations = Set(labels)
+    not_converged_in_legend = false
+
+    for dimension in dimensions, (i, label) in enumerate(labels)
+        key = (dimension, label)
+        haskey(niters, key) || continue
+
+        # Iteration count 0: direct solver or PyAMG (no count reported); -1: the run failed
+        valid = (problem_sizes[key] .> 0) .& (niters[key] .> 0)
+        any(valid) || continue
+        delete!(without_iterations, label)
+
+        plot_series!(p, Plotter, problem_sizes[key][valid], niters[key][valid], COLORS[i], linestyle_for(dimension, dimensions))
+
+        # Mark problem sizes where the Krylov method did not report convergence
+        not_converged = valid .& .!endswith.(retcodes[key], "Success")
+        if any(not_converged)
+            Plotter.scatter!(
+                p,
+                problem_sizes[key][not_converged],
+                niters[key][not_converged];
+                marker = :xcross,
+                markersize = 6,
+                color = :black,
+                label = "not converged",
+                primary = !not_converged_in_legend,
+            )
+            not_converged_in_legend = true
+        end
+    end
+
+    isempty(without_iterations) ||
+        @info "No iteration counts (direct solver or PyAMG): $(join(sort(collect(without_iterations)), ", "))"
+
+    add_legend!(p, Plotter, labels, dimensions; skip = without_iterations)
+    add_references!(p, Plotter, references, xlims)
+
+    if save_figure
+        Plotter.savefig(p, title_figure)
+    end
+
+    return p
+end
+
+end # module
