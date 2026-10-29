@@ -71,7 +71,7 @@ deps = ["LinearAlgebra"]
 git-tree-sha1 = "dee8388a9bec89c8713ad176f96960ae2f98598a"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 version = "4.7.4"
-weakdeps = ["SparseArrays", "StaticArrays"]
+weakdeps = {SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf", StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"}
 
     [deps.Adapt.extensions]
     AdaptSparseArraysExt = "SparseArrays"
@@ -217,7 +217,7 @@ deps = ["ColorTypes", "FixedPointNumbers", "LinearAlgebra", "Requires", "Statist
 git-tree-sha1 = "8b3b6f87ce8f65a2b4f857528fd8d70086cd72b1"
 uuid = "c3611d14-8923-5661-9e6a-0046d554d3a4"
 version = "0.11.0"
-weakdeps = ["SpecialFunctions"]
+weakdeps = {SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"}
 
     [deps.ColorVectorSpace.extensions]
     SpecialFunctionsExt = "SpecialFunctions"
@@ -286,7 +286,7 @@ version = "0.2.36"
 git-tree-sha1 = "b4b092499347b18a015186eae3042f72267106cb"
 uuid = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
 version = "1.6.0"
-weakdeps = ["IntervalSets", "LinearAlgebra", "StaticArrays"]
+weakdeps = {IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953", LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e", StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"}
 
     [deps.ConstructionBase.extensions]
     ConstructionBaseIntervalSetsExt = "IntervalSets"
@@ -459,7 +459,7 @@ deps = ["ChunkCodecCore", "ChunkCodecLibZlib", "ChunkCodecLibZstd", "FileIO", "M
 git-tree-sha1 = "9ce2e7c49ae4a7035b7d60db3a553b1f6c16875d"
 uuid = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 version = "0.6.7"
-weakdeps = ["UnPack"]
+weakdeps = {UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"}
 
     [deps.JLD2.extensions]
     UnPackExt = "UnPack"
@@ -842,7 +842,7 @@ deps = ["LinearAlgebra", "PrecompileTools", "SparseArrays"]
 git-tree-sha1 = "ad0e84647fe7b3c2ae02aaeace1522139aaf6a27"
 uuid = "0c0d3e7f-3a8b-4f7e-b6f1-9a4d2e7c1f01"
 version = "1.6.0"
-weakdeps = ["ForwardDiff"]
+weakdeps = {ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"}
 
     [deps.PureKLU.extensions]
     PureKLUForwardDiffExt = "ForwardDiff"
@@ -1007,7 +1007,7 @@ deps = ["Accessors", "Adapt", "ArrayInterface", "DocStringExtensions", "LinearAl
 git-tree-sha1 = "6c97cd41488ccd362363ff9c883dafcff18da45c"
 uuid = "c0aeaf25-5076-4817-a8d5-81caf7dfa961"
 version = "1.30.2"
-weakdeps = ["LoopVectorization", "SparseArrays"]
+weakdeps = {LoopVectorization = "bdcacae8-1622-11e9-2a5c-532679323890", SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"}
 
     [deps.SciMLOperators.extensions]
     SciMLOperatorsLoopVectorizationExt = "LoopVectorization"
@@ -1089,7 +1089,7 @@ deps = ["ArrayInterface", "Compat", "IfElse", "LinearAlgebra", "PrecompileTools"
 git-tree-sha1 = "2a635e15d5035c53b345077c947f31ff91744078"
 uuid = "0d7ed370-da01-4f52-bd93-41d350b8b718"
 version = "1.10.0"
-weakdeps = ["OffsetArrays", "StaticArrays"]
+weakdeps = {OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881", StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"}
 
     [deps.StaticArrayInterface.extensions]
     StaticArrayInterfaceOffsetArraysExt = "OffsetArrays"
