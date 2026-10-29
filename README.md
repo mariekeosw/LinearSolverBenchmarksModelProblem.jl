@@ -39,7 +39,7 @@ benchmark.sh, benchmark.sub               job script and HTCondor submit file
 
 ## Usage
 
-You need Julia 1.10 or later. The Manifest records the package versions used for the results in the paper (Julia 1.12).
+The results in the paper were computed with Julia 1.13.3 and the package versions recorded in `Manifest.toml`.
 
 ```bash
 git clone https://github.com/mariekeosw/LinearSolverBenchmarksModelProblem.jl
