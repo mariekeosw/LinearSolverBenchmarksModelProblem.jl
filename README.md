@@ -62,7 +62,9 @@ returns `(problem_size, runtime, niters, retcode, residual, testval)`. The targe
 benchmark("sym_cg_ilu_example.jld2", sym_solver_configs_cg_ilu; symmetric = true, dimensions = [1, 2, 3], refinement_max = 10)
 ```
 
-The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and writes the results to `results/` (the largest problem sizes take several days).
+The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and writes the results to `results/` (the largest problem sizes take several days). `julia --project scripts/run_benchmarks.jl 6` runs the same benchmarks up to refinement 6 and writes to `results_test/`, as a quick test.
+
+On the HTCondor cluster, submit from the repository directory: `condor_submit benchmark.sub` for the full run, or `condor_submit benchmark.sub -append "arguments = 6"` for a test run.
 
 A result file contains `labels`, `dimensions`, `refinement`, `problem_sizes`, `tlinsolves` (runtimes), `niters`, `retcodes`, `residuals`, `tests` and `environment` (Julia version, CPU and thread settings). Results are dictionaries with keys `(dimension, label)`.
 

@@ -1,4 +1,8 @@
+# Submit from the repository directory:
+#   condor_submit benchmark.sub                              full run (results/)
+#   condor_submit benchmark.sub -append "arguments = 6"      test run (results_test/)
 executable              = benchmark.sh
+environment             = "REPO_DIR=$ENV(PWD)"
 
 log                     = benchmark.log
 output                  = benchmark.out

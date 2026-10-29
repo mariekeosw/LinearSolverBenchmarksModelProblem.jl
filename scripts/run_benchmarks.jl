@@ -3,8 +3,12 @@ Runs all benchmarks of the paper and writes one .jld2 file per benchmark to resu
 
     julia --project scripts/run_benchmarks.jl
 
-The largest problem sizes take several days. To run a single benchmark, use `benchmark`
-directly (see README).
+The largest problem sizes take several days. For a quick test, pass a maximal refinement;
+the results are then written to results_test/:
+
+    julia --project scripts/run_benchmarks.jl 6
+
+To run a single benchmark, use `benchmark` directly (see README).
 =#
 
 using LinearSolverBenchmarksModelProblem
@@ -33,12 +37,16 @@ const BENCHMARKS = [
     ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3]),
 ]
 
-mkpath("results")
+const MAX_REFINEMENT = isempty(ARGS) ? nothing : parse(Int, ARGS[1])
+const OUTDIR = isnothing(MAX_REFINEMENT) ? "results" : "results_test"
+mkpath(OUTDIR)
 
 for (name, configs, symmetric, refinement_max, dimensions) in BENCHMARKS
+    isnothing(MAX_REFINEMENT) || (refinement_max = min(refinement_max, MAX_REFINEMENT))
+
     # Small warm-up run so that compilation time is not included in the measurements
     benchmark(tempname() * ".jld2", configs; symmetric, dimensions, refinement_max = 0)
 
-    t = @elapsed benchmark(joinpath("results", name * ".jld2"), configs; symmetric, dimensions, refinement_max)
+    t = @elapsed benchmark(joinpath(OUTDIR, name * ".jld2"), configs; symmetric, dimensions, refinement_max)
     @info "$name took $(round(t; digits = 1)) seconds"
 end
