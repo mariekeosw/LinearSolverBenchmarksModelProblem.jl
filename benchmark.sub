@@ -1,18 +1,32 @@
+# Runs the benchmarks of the paper as four parallel jobs (see scripts/run_benchmarks.jl):
+# MKLPardiso symmetric, MKLPardiso nonsymmetric, all other symmetric and all other
+# nonsymmetric benchmarks. Each job runs single-threaded on reserved cores. All jobs run on
+# the same node, so that all runtimes are measured on the same hardware.
+#
 # Submit from the repository directory:
-#   condor_submit benchmark.sub                              full run (results/)
-#   condor_submit benchmark.sub -append "arguments = 6"      test run (results_test/)
+#   condor_submit benchmark.sub                                     full run (results/)
+#   condor_submit benchmark.sub -append "max_refinement = 10"       test run (results_test/)
 executable              = benchmark.sh
+arguments               = $(job) $(max_refinement)
 environment             = "REPO_DIR=$ENV(PWD)"
 
-log                     = benchmark.log
-output                  = benchmark.out
-error                   = benchmark.err
+log                     = benchmark_$(job).log
+output                  = benchmark_$(job).out
+error                   = benchmark_$(job).err
 
-request_cpus = 12
-request_memory = 500 GB
-request_disk = 50 GB
+request_cpus            = 12
+request_memory          = $(memory)
+request_disk            = 50 GB
+requirements            = regexp("^leonhard-26", Machine)
 
-stream_output = TRUE
-stream_error = TRUE
+stream_output           = TRUE
+stream_error            = TRUE
 
-queue
+max_refinement          =
+
+queue job, memory from (
+    sym_pardiso, 500GB
+    nsym_pardiso, 500GB
+    sym, 100GB
+    nsym, 100GB
+)

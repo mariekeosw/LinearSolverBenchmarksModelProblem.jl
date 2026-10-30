@@ -20,7 +20,7 @@ All solvers are accessed through [`LinearSolve.jl`](https://github.com/SciML/Lin
 | Incomplete factorizations | ILU(0) from [`ILUZero.jl`](https://github.com/mcovalt/ILUZero.jl), threshold ILU (drop tolerances 0.01 and 0.1) from [`IncompleteLU.jl`](https://github.com/haampie/IncompleteLU.jl) |
 | Algebraic multigrid | Ruge–Stüben and smoothed aggregation from [`AMGCLWrap.jl`](https://github.com/j-fu/AMGCLWrap.jl) (with SPAI(0) or ILU(0) relaxation), [`AlgebraicMultigrid.jl`](https://github.com/JuliaLinearAlgebra/AlgebraicMultigrid.jl) and [`LinearSolvePyAMG.jl`](https://github.com/SciML/LinearSolve.jl/tree/main/lib/LinearSolvePyAMG) |
 
-All solvers run single-threaded (`scripts/run_benchmarks.jl` sets `OMP_NUM_THREADS`, `MKL_NUM_THREADS` and the BLAS threads to 1). The linear solver runtime (setup + solve) is measured with `@belapsed` from [`BenchmarkTools.jl`](https://github.com/JuliaCI/BenchmarkTools.jl). The number of Krylov iterations, the return code, the relative residual and the mean of the solution are taken from the solution of the last timed sample (`src/benchmark.jl`).
+All solvers run single-threaded (`scripts/run_benchmarks.jl` sets `OMP_NUM_THREADS`, `MKL_NUM_THREADS` and the BLAS threads to 1). The linear solver runtime (setup + solve) is measured with [`BenchmarkTools.jl`](https://github.com/JuliaCI/BenchmarkTools.jl) (minimum over at most 10 samples within 0.5 s; all solvers are compiled in a small warm-up run beforehand, so no extra warm-up evaluation is needed). The number of Krylov iterations, the return code, the relative residual and the mean of the solution are taken from the solution of the last timed sample (`src/benchmark.jl`).
 
 ## Structure
 
@@ -69,9 +69,9 @@ returns `(problem_size, runtime, niters, retcode, residual, testval)`. The targe
 benchmark("sym_cg_ilu_example.jld2", sym_solver_configs_cg_ilu; symmetric = true, dimensions = [1, 2, 3], refinement_max = 10)
 ```
 
-The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and writes the results to `results/` (the largest problem sizes take several days). `julia --project scripts/run_benchmarks.jl 6` runs the same benchmarks up to refinement 6 and writes to `results_test/`, as a quick test.
+The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and writes the results to `results/`; the result files are updated after every solve. `julia --project scripts/run_benchmarks.jl sym` runs only one job (`sym_pardiso`, `nsym_pardiso`, `sym` or `nsym`). `julia --project scripts/run_benchmarks.jl all 6` runs all benchmarks up to refinement 6 and writes to `results_test/`, as a quick test.
 
-On the HTCondor cluster, submit from the repository directory: `condor_submit benchmark.sub` for the full run, or `condor_submit benchmark.sub -append "arguments = 6"` for a test run.
+On the HTCondor cluster, submit from the repository directory: `condor_submit benchmark.sub` runs the four jobs in parallel on the same node (full run), `condor_submit benchmark.sub -append "max_refinement = 6"` runs a test.
 
 A result file contains `labels`, `dimensions`, `refinement`, `problem_sizes`, `tlinsolves` (runtimes), `niters`, `retcodes`, `residuals`, `tests` and `environment` (Julia version, CPU and thread settings). Results are dictionaries with keys `(dimension, label)`.
 

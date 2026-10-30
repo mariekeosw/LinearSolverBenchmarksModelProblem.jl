@@ -1,12 +1,14 @@
 #=
-Runs all benchmarks of the paper and writes one .jld2 file per benchmark to results/.
+Runs the benchmarks of the paper and writes one .jld2 file per benchmark to results/.
 
-    julia --project scripts/run_benchmarks.jl
+    julia --project scripts/run_benchmarks.jl [job] [max_refinement]
 
-The largest problem sizes take several days. For a quick test, pass a maximal refinement;
-the results are then written to results_test/:
+`job` selects the benchmarks: "all" (default), or one of the jobs "sym_pardiso",
+"nsym_pardiso", "sym", "nsym" (fourth column of BENCHMARKS). benchmark.sub runs the four jobs
+in parallel. For a quick test, pass a maximal refinement; the results are then written to
+results_test/:
 
-    julia --project scripts/run_benchmarks.jl 6
+    julia --project scripts/run_benchmarks.jl all 6
 
 To run a single benchmark, use `benchmark` directly (see README).
 
@@ -28,35 +30,38 @@ Threads.nthreads() == 1 || error("Start Julia with one thread (julia --threads=1
 # MKLROOT was set when it was built; then rebuild it with `unset MKLROOT` (see README).
 Pardiso.LOCAL_MKL_FOUND && error("Pardiso.jl was built with a system MKL (MKLROOT)")
 
-# (file name, solver configurations, symmetric, maximal refinement, dimensions)
+# (file name, solver configurations, symmetric, maximal refinement, dimensions, job)
 const BENCHMARKS = [
     # Symmetric problem
-    ("sym_direct", solver_configs_direct, true, 15, [1, 2, 3]),
-    ("sym_direct_pardiso", solver_configs_direct_pardiso, true, 20, [1, 2, 3]),
-    ("sym_cg", sym_solver_configs_cg, true, 22, [1, 2, 3]),
-    ("sym_cg_ilu", sym_solver_configs_cg_ilu, true, 22, [1, 2, 3]),
-    ("sym_cg_amgcl", sym_solver_configs_cg_amgcl, true, 22, [1, 2, 3]),
-    ("sym_cg_amg_1d", sym_solver_configs_cg_amg, true, 20, [1]),
-    ("sym_cg_amg_23d", sym_solver_configs_cg_amg, true, 22, [2, 3]),
-    ("sym_cg_pyamg", sym_solver_configs_cg_pyamg, true, 22, [1, 2, 3]),
+    ("sym_direct", solver_configs_direct, true, 15, [1, 2, 3], "sym"),
+    ("sym_direct_pardiso", solver_configs_direct_pardiso, true, 20, [1, 2, 3], "sym_pardiso"),
+    ("sym_cg", sym_solver_configs_cg, true, 22, [1, 2, 3], "sym"),
+    ("sym_cg_ilu", sym_solver_configs_cg_ilu, true, 22, [1, 2, 3], "sym"),
+    ("sym_cg_amgcl", sym_solver_configs_cg_amgcl, true, 22, [1, 2, 3], "sym"),
+    ("sym_cg_amg_1d", sym_solver_configs_cg_amg, true, 20, [1], "sym"),
+    ("sym_cg_amg_23d", sym_solver_configs_cg_amg, true, 22, [2, 3], "sym"),
+    ("sym_cg_pyamg", sym_solver_configs_cg_pyamg, true, 22, [1, 2, 3], "sym"),
     # Nonsymmetric problem
-    ("nsym_direct", solver_configs_direct, false, 15, [1, 2, 3]),
-    ("nsym_direct_pardiso", solver_configs_direct_pardiso, false, 20, [1, 2, 3]),
-    ("nsym_krylov", nsym_solver_configs_krylov, false, 22, [1, 2, 3]),
-    ("nsym_krylov_ilu", nsym_solver_configs_krylov_ilu, false, 22, [1, 2, 3]),
-    ("nsym_krylov_amgcl_spai0", nsym_solver_configs_krylov_amgcl_spai0, false, 22, [1, 2, 3]),
-    ("nsym_krylov_amgcl_ilu0_1d", nsym_solver_configs_krylov_amgcl_ilu0, false, 20, [1]),
-    ("nsym_krylov_amgcl_ilu0_23d", nsym_solver_configs_krylov_amgcl_ilu0, false, 22, [2, 3]),
-    ("nsym_krylov_amg_1d", nsym_solver_configs_krylov_amg, false, 20, [1]),
-    ("nsym_krylov_amg_23d", nsym_solver_configs_krylov_amg, false, 22, [2, 3]),
-    ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3]),
+    ("nsym_direct", solver_configs_direct, false, 15, [1, 2, 3], "nsym"),
+    ("nsym_direct_pardiso", solver_configs_direct_pardiso, false, 20, [1, 2, 3], "nsym_pardiso"),
+    ("nsym_krylov", nsym_solver_configs_krylov, false, 22, [1, 2, 3], "nsym"),
+    ("nsym_krylov_ilu", nsym_solver_configs_krylov_ilu, false, 22, [1, 2, 3], "nsym"),
+    ("nsym_krylov_amgcl_spai0", nsym_solver_configs_krylov_amgcl_spai0, false, 22, [1, 2, 3], "nsym"),
+    ("nsym_krylov_amgcl_ilu0_1d", nsym_solver_configs_krylov_amgcl_ilu0, false, 20, [1], "nsym"),
+    ("nsym_krylov_amgcl_ilu0_23d", nsym_solver_configs_krylov_amgcl_ilu0, false, 22, [2, 3], "nsym"),
+    ("nsym_krylov_amg_1d", nsym_solver_configs_krylov_amg, false, 20, [1], "nsym"),
+    ("nsym_krylov_amg_23d", nsym_solver_configs_krylov_amg, false, 22, [2, 3], "nsym"),
+    ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3], "nsym"),
 ]
 
-const MAX_REFINEMENT = isempty(ARGS) ? nothing : parse(Int, ARGS[1])
+const JOB = length(ARGS) >= 1 ? ARGS[1] : "all"
+const MAX_REFINEMENT = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : nothing
 const OUTDIR = isnothing(MAX_REFINEMENT) ? "results" : "results_test"
+JOB == "all" || JOB in last.(BENCHMARKS) || error("Unknown job $JOB")
 mkpath(OUTDIR)
 
-for (name, configs, symmetric, refinement_max, dimensions) in BENCHMARKS
+for (name, configs, symmetric, refinement_max, dimensions, job) in BENCHMARKS
+    JOB == "all" || JOB == job || continue
     isnothing(MAX_REFINEMENT) || (refinement_max = min(refinement_max, MAX_REFINEMENT))
 
     # Small warm-up run so that compilation time is not included in the measurements

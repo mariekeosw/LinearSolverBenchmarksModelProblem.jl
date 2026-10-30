@@ -11,7 +11,7 @@ using IncompleteLU: ilu
 using AMGCLWrap: AMGCLWrap
 using AlgebraicMultigrid: AlgebraicMultigrid
 using LinearSolvePyAMG: PyAMG
-using BenchmarkTools: @belapsed
+using BenchmarkTools: BenchmarkTools, @benchmarkable
 using JLD2: @save
 
 include("matrices.jl")

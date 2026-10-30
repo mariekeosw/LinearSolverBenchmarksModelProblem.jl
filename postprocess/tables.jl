@@ -25,7 +25,7 @@ function export_table(filename_in, filename_out)
     open(filename_out, "w") do io
         println(io, "\\setlength{\\tabcolsep}{6pt}\n\\footnotesize")
         println(io, "\\begin{longtable}{l ", repeat("r ", ncols * length(dims)), "}")
-        println(io, "\\caption{Linear solver runtimes (setup + solve) obtained with \\texttt{@belapsed}", isnothing(niters) ? "" : " and Krylov iterations", ".}")
+        println(io, "\\caption{Linear solver runtimes (setup + solve) measured with BenchmarkTools.jl", isnothing(niters) ? "" : " and Krylov iterations", ".}")
         println(io, "\\label{tab:xx}\\\\")
 
         header = "\\toprule" * join([" & \\multicolumn{$ncols}{c}{$(dim)D}" for dim in dims]) * " \\\\\n" *
