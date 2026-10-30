@@ -95,6 +95,7 @@ function environment_info()
         "blas_config" => string(BLAS.get_config()),
         "OMP_NUM_THREADS" => get(ENV, "OMP_NUM_THREADS", "unset"),
         "MKL_NUM_THREADS" => get(ENV, "MKL_NUM_THREADS", "unset"),
+        "mkl_pardiso_library" => string(Pardiso.libmkl_rt),
         "hostname" => gethostname(),
     )
 end

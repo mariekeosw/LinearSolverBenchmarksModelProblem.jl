@@ -18,10 +18,15 @@ ENV["OMP_NUM_THREADS"] = "1"
 ENV["MKL_NUM_THREADS"] = "1"
 
 using LinearAlgebra: BLAS
+using Pardiso: Pardiso
 using LinearSolverBenchmarksModelProblem
 
 BLAS.set_num_threads(1)
 Threads.nthreads() == 1 || error("Start Julia with one thread (julia --threads=1)")
+
+# MKLPardiso has to use MKL_jll from the Manifest. Pardiso.jl switches to a system MKL if
+# MKLROOT was set when it was built; then rebuild it with `unset MKLROOT` (see README).
+Pardiso.LOCAL_MKL_FOUND && error("Pardiso.jl was built with a system MKL (MKLROOT)")
 
 # (file name, solver configurations, symmetric, maximal refinement, dimensions)
 const BENCHMARKS = [

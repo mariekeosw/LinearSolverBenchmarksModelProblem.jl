@@ -47,6 +47,13 @@ cd LinearSolverBenchmarksModelProblem.jl
 julia --project -e 'using Pkg; Pkg.instantiate()'
 ```
 
+MKLPardiso uses the MKL recorded in the Manifest (`MKL_jll`). Pardiso.jl switches to a system MKL if the environment variable `MKLROOT` is set when it is built, e.g. on machines with Intel oneAPI. In that case, rebuild it once without `MKLROOT`:
+
+```bash
+unset MKLROOT LD_LIBRARY_PATH
+julia --project -e 'using Pkg; Pkg.build("Pardiso")'
+```
+
 ### Single solve
 
 ```julia
