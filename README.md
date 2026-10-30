@@ -20,7 +20,7 @@ All solvers are accessed through [`LinearSolve.jl`](https://github.com/SciML/Lin
 | Incomplete factorizations | ILU(0) from [`ILUZero.jl`](https://github.com/mcovalt/ILUZero.jl), threshold ILU (drop tolerances 0.01 and 0.1) from [`IncompleteLU.jl`](https://github.com/haampie/IncompleteLU.jl) |
 | Algebraic multigrid | Ruge–Stüben and smoothed aggregation from [`AMGCLWrap.jl`](https://github.com/j-fu/AMGCLWrap.jl) (with SPAI(0) or ILU(0) relaxation), [`AlgebraicMultigrid.jl`](https://github.com/JuliaLinearAlgebra/AlgebraicMultigrid.jl) and [`LinearSolvePyAMG.jl`](https://github.com/SciML/LinearSolve.jl/tree/main/lib/LinearSolvePyAMG) |
 
-The linear solver runtime (setup + solve) is measured with `@belapsed` from [`BenchmarkTools.jl`](https://github.com/JuliaCI/BenchmarkTools.jl). The number of Krylov iterations, the return code, the relative residual and the mean of the solution are taken from the solution of the last timed sample (`src/benchmark.jl`).
+All solvers run single-threaded (`scripts/run_benchmarks.jl` sets `OMP_NUM_THREADS`, `MKL_NUM_THREADS` and the BLAS threads to 1). The linear solver runtime (setup + solve) is measured with `@belapsed` from [`BenchmarkTools.jl`](https://github.com/JuliaCI/BenchmarkTools.jl). The number of Krylov iterations, the return code, the relative residual and the mean of the solution are taken from the solution of the last timed sample (`src/benchmark.jl`).
 
 ## Structure
 

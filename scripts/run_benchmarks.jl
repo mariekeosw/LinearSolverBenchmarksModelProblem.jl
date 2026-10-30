@@ -9,9 +9,19 @@ the results are then written to results_test/:
     julia --project scripts/run_benchmarks.jl 6
 
 To run a single benchmark, use `benchmark` directly (see README).
+
+All solvers run single-threaded, so that they are compared under the same conditions.
 =#
 
+# Must be set before AMGCL (OpenMP) and MKLPardiso are loaded
+ENV["OMP_NUM_THREADS"] = "1"
+ENV["MKL_NUM_THREADS"] = "1"
+
+using LinearAlgebra: BLAS
 using LinearSolverBenchmarksModelProblem
+
+BLAS.set_num_threads(1)
+Threads.nthreads() == 1 || error("Start Julia with one thread (julia --threads=1)")
 
 # (file name, solver configurations, symmetric, maximal refinement, dimensions)
 const BENCHMARKS = [

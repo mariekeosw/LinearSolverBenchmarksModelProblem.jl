@@ -8,11 +8,11 @@ cd "${REPO_DIR:?REPO_DIR not set; submit benchmark.sub from the repository direc
 export MKLROOT=/opt/intel/oneapi/mkl/2025.3
 export LD_LIBRARY_PATH=$MKLROOT/lib:$LD_LIBRARY_PATH
 
-# Thread settings are stored in the result files (environment_info in
-# src/benchmark.jl). For reproducible runs, set them explicitly,
-# e.g. to the number of CPUs requested in benchmark.sub:
-# export OMP_NUM_THREADS=12
-# export MKL_NUM_THREADS=12
+# All solvers run single-threaded (also set in scripts/run_benchmarks.jl).
+# The thread settings are stored in the result files (environment_info in src/benchmark.jl).
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
 
 # Optional argument: maximal refinement for a test run (see scripts/run_benchmarks.jl)
-julia --project scripts/run_benchmarks.jl "$@"
+julia --project --threads=1 scripts/run_benchmarks.jl "$@"
