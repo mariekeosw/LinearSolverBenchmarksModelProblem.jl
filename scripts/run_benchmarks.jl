@@ -34,7 +34,7 @@ Pardiso.LOCAL_MKL_FOUND && error("Pardiso.jl was built with a system MKL (MKLROO
 const BENCHMARKS = [
     # Symmetric problem
     ("sym_direct", solver_configs_direct, true, 15, [1, 2, 3], "sym"),
-    ("sym_direct_pardiso", solver_configs_direct_pardiso, true, 20, [1, 2, 3], "sym_pardiso"),
+    ("sym_direct_pardiso", solver_configs_direct_pardiso, true, 19, [1, 2, 3], "sym_pardiso"),
     ("sym_cg", sym_solver_configs_cg, true, 22, [1, 2, 3], "sym"),
     ("sym_cg_ilu", sym_solver_configs_cg_ilu, true, 22, [1, 2, 3], "sym"),
     ("sym_cg_amgcl", sym_solver_configs_cg_amgcl, true, 22, [1, 2, 3], "sym"),
@@ -43,7 +43,7 @@ const BENCHMARKS = [
     ("sym_cg_pyamg", sym_solver_configs_cg_pyamg, true, 22, [1, 2, 3], "sym"),
     # Nonsymmetric problem
     ("nsym_direct", solver_configs_direct, false, 15, [1, 2, 3], "nsym"),
-    ("nsym_direct_pardiso", solver_configs_direct_pardiso, false, 20, [1, 2, 3], "nsym_pardiso"),
+    ("nsym_direct_pardiso", solver_configs_direct_pardiso, false, 19, [1, 2, 3], "nsym_pardiso"),
     ("nsym_krylov", nsym_solver_configs_krylov, false, 22, [1, 2, 3], "nsym"),
     ("nsym_krylov_ilu", nsym_solver_configs_krylov_ilu, false, 22, [1, 2, 3], "nsym"),
     ("nsym_krylov_amgcl_spai0", nsym_solver_configs_krylov_amgcl_spai0, false, 22, [1, 2, 3], "nsym"),

@@ -26,8 +26,8 @@ max_refinement          =
 
 # memory: peak memory of the largest problem (3D) plus a margin
 queue job, memory from (
-    sym_pardiso, 200GB
+    sym_pardiso, 250GB
     sym, 50GB
-#   nsym_pardiso, 200GB
+#   nsym_pardiso, 250GB
 #   nsym, 50GB
 )
