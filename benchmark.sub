@@ -1,6 +1,6 @@
-# Runs the benchmarks of the paper as four parallel jobs (see scripts/run_benchmarks.jl):
-# MKLPardiso symmetric, MKLPardiso nonsymmetric, all other symmetric and all other
-# nonsymmetric benchmarks. Each job runs single-threaded on reserved cores. All jobs run on
+# Runs the benchmarks of the paper as parallel jobs (see scripts/run_benchmarks.jl):
+# MKLPardiso symmetric, all other symmetric benchmarks and (commented out below) the same for
+# the nonsymmetric problem. Each job runs single-threaded on reserved cores. All jobs run on
 # the same node, so that all runtimes are measured on the same hardware.
 #
 # Submit from the repository directory:
@@ -24,9 +24,10 @@ stream_error            = TRUE
 
 max_refinement          =
 
+# memory: peak memory of the largest problem (3D) plus a margin
 queue job, memory from (
-    sym_pardiso, 500GB
-    nsym_pardiso, 500GB
-    sym, 100GB
-    nsym, 100GB
+    sym_pardiso, 200GB
+    sym, 50GB
+#   nsym_pardiso, 200GB
+#   nsym, 50GB
 )
