@@ -8,6 +8,10 @@ cd "${REPO_DIR:?REPO_DIR not set; submit benchmark.sub from the repository direc
 # oneAPI with its own MKL, OpenMP and zstd) would mix in other library versions.
 unset LD_LIBRARY_PATH
 
+# PyAMG runs in a Python environment that CondaPkg.jl installs with pixi. In HTCondor jobs,
+# pixi cannot detect the glibc version of the node, so it is passed explicitly.
+export CONDA_OVERRIDE_GLIBC="$(getconf GNU_LIBC_VERSION | awk '{print $2}')"
+
 # All solvers run single-threaded (also set in scripts/run_benchmarks.jl).
 # The thread settings are stored in the result files (environment_info in src/benchmark.jl).
 export OMP_NUM_THREADS=1
