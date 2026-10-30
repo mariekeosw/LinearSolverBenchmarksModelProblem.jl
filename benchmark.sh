@@ -4,6 +4,10 @@
 # from benchmark.sub (submit the job from the repository directory).
 cd "${REPO_DIR:?REPO_DIR not set; submit benchmark.sub from the repository directory}"
 
+# Julia brings all libraries via the Manifest; library paths of the system (e.g. Intel
+# oneAPI with its own MKL, OpenMP and zstd) would mix in other library versions.
+unset LD_LIBRARY_PATH
+
 # All solvers run single-threaded (also set in scripts/run_benchmarks.jl).
 # The thread settings are stored in the result files (environment_info in src/benchmark.jl).
 export OMP_NUM_THREADS=1
