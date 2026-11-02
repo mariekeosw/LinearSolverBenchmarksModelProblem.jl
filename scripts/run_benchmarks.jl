@@ -4,7 +4,7 @@ Runs the benchmarks of the paper and writes one .jld2 file per benchmark to resu
     julia --project scripts/run_benchmarks.jl [job] [max_refinement]
 
 `job` selects the benchmarks: "all" (default), a job (last column of BENCHMARKS:
-"sym_pardiso", "sym", "sym_amg" and the same for "nsym") or a single benchmark by its file
+"sym_pardiso", "sym", "sym_amg", "sym_pyamg" and the same for "nsym") or a single benchmark by its file
 name, e.g. "sym_cg_ilu". benchmark.sub runs the jobs in parallel. For a quick test, pass a
 maximal refinement; the results are then written to results_test/:
 
@@ -45,7 +45,7 @@ const BENCHMARKS = [
     ("sym_cg_amgcl", sym_solver_configs_cg_amgcl, true, 22, [1, 2, 3], "sym_amg"),
     ("sym_cg_amg_1d", sym_solver_configs_cg_amg, true, 20, [1], "sym_amg"),
     ("sym_cg_amg_23d", sym_solver_configs_cg_amg, true, 22, [2, 3], "sym_amg"),
-    ("sym_cg_pyamg", sym_solver_configs_cg_pyamg, true, 22, [1, 2, 3], "sym_amg"),
+    ("sym_cg_pyamg", sym_solver_configs_cg_pyamg, true, 22, [1, 2, 3], "sym_pyamg"),
     # Nonsymmetric problem
     ("nsym_direct", solver_configs_direct, false, 15, [1, 2, 3], "nsym"),
     ("nsym_direct_pardiso", solver_configs_direct_pardiso, false, 19, [1, 2, 3], "nsym_pardiso"),
@@ -56,7 +56,7 @@ const BENCHMARKS = [
     ("nsym_krylov_amgcl_ilu0_23d", nsym_solver_configs_krylov_amgcl_ilu0, false, 22, [2, 3], "nsym_amg"),
     ("nsym_krylov_amg_1d", nsym_solver_configs_krylov_amg, false, 20, [1], "nsym_amg"),
     ("nsym_krylov_amg_23d", nsym_solver_configs_krylov_amg, false, 22, [2, 3], "nsym_amg"),
-    ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3], "nsym_amg"),
+    ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3], "nsym_pyamg"),
 ]
 
 # Model matrix L + δh²I (true) or L + δI (false)
