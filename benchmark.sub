@@ -17,7 +17,7 @@ error                   = benchmark_$(job).err
 
 request_cpus            = 12
 request_memory          = $(memory)
-request_disk            = 50 GB
+request_disk            = 2 GB
 requirements            = regexp("^leonhard-26", Machine)
 
 stream_output           = TRUE
