@@ -19,7 +19,9 @@ function run_single(alg; symmetric = true, dimension = 2, refinement = 5, rng_se
 
     prob = LinearProblem(copy(A), copy(b); u0 = copy(u0), alias = LinearAliasSpecifier(alias_A = true, alias_b = true))
 
-    # Garbage collection is not triggered before each sample (many small benchmarks).
+    # Free the memory of previous solves and of the matrix assembly (not timed). Garbage
+    # collection is not triggered before each sample (many small benchmarks).
+    GC.gc()
     # The Ref stores the solution of the last sample; this does not change the measured runtime.
     sol_ref = Ref{Any}(nothing)
     timing = @benchmarkable begin

@@ -1,7 +1,8 @@
-# Runs the benchmarks of the paper as parallel jobs (see scripts/run_benchmarks.jl):
-# MKLPardiso symmetric, all other symmetric benchmarks and (commented out below) the same for
-# the nonsymmetric problem. Each job runs single-threaded on reserved cores. All jobs run on
-# the same node, so that all runtimes are measured on the same hardware.
+# Runs the benchmarks of the paper as parallel jobs (see scripts/run_benchmarks.jl). A job is
+# a group of benchmarks (sym_pardiso, sym, sym_amg, nsym_pardiso, nsym, nsym_amg) or a single
+# benchmark by its file name (e.g. sym_cg_ilu). Each job runs single-threaded on reserved
+# cores. All jobs run on the same node, so that all runtimes are measured on the same hardware.
+# Select the jobs in the queue block at the end.
 #
 # Submit from the repository directory:
 #   condor_submit benchmark.sub                                     full run (results/)
@@ -26,8 +27,11 @@ max_refinement          =
 
 # memory: peak memory of the largest problem (3D) plus a margin
 queue job, memory from (
-    sym_pardiso, 250GB
-    sym, 50GB
+#   sym_pardiso, 250GB
+#   sym, 100GB
+    sym_cg_ilu, 100GB
+    sym_amg, 100GB
 #   nsym_pardiso, 250GB
-#   nsym, 50GB
+#   nsym, 100GB
+#   nsym_amg, 100GB
 )

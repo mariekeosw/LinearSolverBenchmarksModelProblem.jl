@@ -69,9 +69,9 @@ returns `(problem_size, runtime, niters, retcode, residual, testval)`. The targe
 benchmark("sym_cg_ilu_example.jld2", sym_solver_configs_cg_ilu; symmetric = true, dimensions = [1, 2, 3], refinement_max = 10)
 ```
 
-The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and writes the results to `results/`; the result files are updated after every solve. `julia --project scripts/run_benchmarks.jl sym` runs only one job (`sym_pardiso`, `nsym_pardiso`, `sym` or `nsym`). `julia --project scripts/run_benchmarks.jl all 6` runs all benchmarks up to refinement 6 and writes to `results_test/`, as a quick test.
+The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and writes the results to `results/`; the result files are updated after every solve. `julia --project scripts/run_benchmarks.jl sym_amg` runs only one job (`sym_pardiso`, `sym`, `sym_amg` and the same for `nsym`) or a single benchmark by its file name (e.g. `sym_cg_ilu`). `julia --project scripts/run_benchmarks.jl all 6` runs all benchmarks up to refinement 6 and writes to `results_test/`, as a quick test.
 
-On the HTCondor cluster, submit from the repository directory: `condor_submit benchmark.sub` runs the four jobs in parallel on the same node (full run), `condor_submit benchmark.sub -append "max_refinement = 6"` runs a test.
+On the HTCondor cluster, submit from the repository directory: `condor_submit benchmark.sub` runs the jobs selected in its queue block in parallel on the same node (full run), `condor_submit benchmark.sub -append "max_refinement = 6"` runs a test.
 
 A result file contains `labels`, `dimensions`, `refinement`, `problem_sizes`, `tlinsolves` (runtimes), `niters`, `retcodes`, `residuals`, `tests` and `environment` (Julia version, CPU and thread settings). Results are dictionaries with keys `(dimension, label)`.
 

@@ -3,10 +3,10 @@ Runs the benchmarks of the paper and writes one .jld2 file per benchmark to resu
 
     julia --project scripts/run_benchmarks.jl [job] [max_refinement]
 
-`job` selects the benchmarks: "all" (default), or one of the jobs "sym_pardiso",
-"nsym_pardiso", "sym", "nsym" (fourth column of BENCHMARKS). benchmark.sub runs the four jobs
-in parallel. For a quick test, pass a maximal refinement; the results are then written to
-results_test/:
+`job` selects the benchmarks: "all" (default), a job (last column of BENCHMARKS:
+"sym_pardiso", "sym", "sym_amg" and the same for "nsym") or a single benchmark by its file
+name, e.g. "sym_cg_ilu". benchmark.sub runs the jobs in parallel. For a quick test, pass a
+maximal refinement; the results are then written to results_test/:
 
     julia --project scripts/run_benchmarks.jl all 6
 
@@ -34,34 +34,35 @@ Pardiso.LOCAL_MKL_FOUND && error("Pardiso.jl was built with a system MKL (MKLROO
 const BENCHMARKS = [
     # Symmetric problem
     ("sym_direct", solver_configs_direct, true, 15, [1, 2, 3], "sym"),
+    # MKLPardiso: in 3D, refinement 19 needs more than 250 GB (results end at refinement 18)
     ("sym_direct_pardiso", solver_configs_direct_pardiso, true, 19, [1, 2, 3], "sym_pardiso"),
     ("sym_cg", sym_solver_configs_cg, true, 22, [1, 2, 3], "sym"),
     ("sym_cg_ilu", sym_solver_configs_cg_ilu, true, 22, [1, 2, 3], "sym"),
-    ("sym_cg_amgcl", sym_solver_configs_cg_amgcl, true, 22, [1, 2, 3], "sym"),
-    ("sym_cg_amg_1d", sym_solver_configs_cg_amg, true, 20, [1], "sym"),
-    ("sym_cg_amg_23d", sym_solver_configs_cg_amg, true, 22, [2, 3], "sym"),
-    ("sym_cg_pyamg", sym_solver_configs_cg_pyamg, true, 22, [1, 2, 3], "sym"),
+    ("sym_cg_amgcl", sym_solver_configs_cg_amgcl, true, 22, [1, 2, 3], "sym_amg"),
+    ("sym_cg_amg_1d", sym_solver_configs_cg_amg, true, 20, [1], "sym_amg"),
+    ("sym_cg_amg_23d", sym_solver_configs_cg_amg, true, 22, [2, 3], "sym_amg"),
+    ("sym_cg_pyamg", sym_solver_configs_cg_pyamg, true, 22, [1, 2, 3], "sym_amg"),
     # Nonsymmetric problem
     ("nsym_direct", solver_configs_direct, false, 15, [1, 2, 3], "nsym"),
     ("nsym_direct_pardiso", solver_configs_direct_pardiso, false, 19, [1, 2, 3], "nsym_pardiso"),
     ("nsym_krylov", nsym_solver_configs_krylov, false, 22, [1, 2, 3], "nsym"),
     ("nsym_krylov_ilu", nsym_solver_configs_krylov_ilu, false, 22, [1, 2, 3], "nsym"),
-    ("nsym_krylov_amgcl_spai0", nsym_solver_configs_krylov_amgcl_spai0, false, 22, [1, 2, 3], "nsym"),
-    ("nsym_krylov_amgcl_ilu0_1d", nsym_solver_configs_krylov_amgcl_ilu0, false, 20, [1], "nsym"),
-    ("nsym_krylov_amgcl_ilu0_23d", nsym_solver_configs_krylov_amgcl_ilu0, false, 22, [2, 3], "nsym"),
-    ("nsym_krylov_amg_1d", nsym_solver_configs_krylov_amg, false, 20, [1], "nsym"),
-    ("nsym_krylov_amg_23d", nsym_solver_configs_krylov_amg, false, 22, [2, 3], "nsym"),
-    ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3], "nsym"),
+    ("nsym_krylov_amgcl_spai0", nsym_solver_configs_krylov_amgcl_spai0, false, 22, [1, 2, 3], "nsym_amg"),
+    ("nsym_krylov_amgcl_ilu0_1d", nsym_solver_configs_krylov_amgcl_ilu0, false, 20, [1], "nsym_amg"),
+    ("nsym_krylov_amgcl_ilu0_23d", nsym_solver_configs_krylov_amgcl_ilu0, false, 22, [2, 3], "nsym_amg"),
+    ("nsym_krylov_amg_1d", nsym_solver_configs_krylov_amg, false, 20, [1], "nsym_amg"),
+    ("nsym_krylov_amg_23d", nsym_solver_configs_krylov_amg, false, 22, [2, 3], "nsym_amg"),
+    ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3], "nsym_amg"),
 ]
 
 const JOB = length(ARGS) >= 1 ? ARGS[1] : "all"
 const MAX_REFINEMENT = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : nothing
 const OUTDIR = isnothing(MAX_REFINEMENT) ? "results" : "results_test"
-JOB == "all" || JOB in last.(BENCHMARKS) || error("Unknown job $JOB")
+JOB == "all" || JOB in last.(BENCHMARKS) || JOB in first.(BENCHMARKS) || error("Unknown job or benchmark $JOB")
 mkpath(OUTDIR)
 
 for (name, configs, symmetric, refinement_max, dimensions, job) in BENCHMARKS
-    JOB == "all" || JOB == job || continue
+    JOB == "all" || JOB == job || JOB == name || continue
     isnothing(MAX_REFINEMENT) || (refinement_max = min(refinement_max, MAX_REFINEMENT))
 
     # Small warm-up run so that compilation time is not included in the measurements
