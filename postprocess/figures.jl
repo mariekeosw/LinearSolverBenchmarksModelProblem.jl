@@ -273,9 +273,9 @@ function plot_iterations(
         algorithms = nothing,
         active_dimensions = nothing,
         references = [],
-        ylims = :auto,
-        yticks = :auto,
-        xlims = DEFAULT_XLIMS,
+        ylims = (0.9e0, 1.0e3),
+        yticks = 10.0 .^ (0:1:3),
+        xlims = (0.7e1, 0.7e8),
         save_figure = false,
         title_figure = nothing,
     )

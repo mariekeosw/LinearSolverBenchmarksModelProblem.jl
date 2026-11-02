@@ -101,23 +101,40 @@ Figures.plot_runtimes(r("sym_direct_pardiso"), r("sym_cg_amgcl"); Plotter = Plot
     algorithms = ["MKLPardiso", "CG-AMGCL-RS-SPAI0", "CG-AMGCL-SA-SPAI0", "CG-AMGCL-RS-ILU0", "CG-AMGCL-SA-ILU0"],
     save_figure = true, title_figure = "sym_mp_cg_amgcl.pdf")
 
-Figures.plot_runtimes(r("sym_cg"), r("sym_cg_ilu"), r("sym_cg_amgcl"); Plotter = Plots,
-    algorithms = ["CG", "CG-ILU0", "CG-AMGCL-SA-SPAI0"], active_dimensions = 2,
-    references = [(1, 1.0e-6), (3 / 2, 1.0e-8)],
-    save_figure = true, title_figure = "sym_mp_cg_ilu_amgcl_2d.pdf")
+Figures.plot_runtimes(r("sym_direct_pardiso"), r("sym_cg_amg_1d"), r("sym_cg_amg_23d"); Plotter = Plots,
+           algorithms = ["MKLPardiso", "CG-AMG-RS", "CG-AMG-SA"],
+           save_figure = true, title_figure = "sym_mp_cg_amg.pdf")
 
-Figures.plot_runtimes(r("sym_cg"), r("sym_cg_ilu"), r("sym_cg_amgcl"); Plotter = Plots,
-    algorithms = ["CG", "CG-ILU0", "CG-AMGCL-SA-SPAI0"], active_dimensions = 3,
-    references = [(1, 1.0e-6), (4 / 3, 1.0e-7)],
-    save_figure = true, title_figure = "sym_mp_cg_ilu_amgcl_3d.pdf")
-
-Figures.plot_runtimes(r("nsym_direct_pardiso"), r("nsym_krylov"), r("nsym_krylov_ilu"), r("nsym_krylov_amgcl_spai0"); Plotter = Plots,
-    algorithms = ["MKLPardiso", "BiCGSTAB", "GMRES", "BiCGSTAB-ILU0", "GMRES-ILU0", "BiCGSTAB-AMGCL-SA-SPAI0", "GMRES-AMGCL-SA-SPAI0"],
-    active_dimensions = 3,
-    save_figure = true, title_figure = "nsym_mp_krylov_3d.pdf")
+Figures.plot_runtimes(r("sym_direct_pardiso"), r("sym_cg_pyamg"); Plotter = Plots,
+           algorithms = ["MKLPardiso", "CG-PyAMG-RS", "CG-PyAMG-SA"],
+           save_figure = true, title_figure = "sym_mp_cg_pyamg.pdf")
 ```
 
 The iteration figures use the same calls with `Figures.plot_iterations`.
+```julia
+Figures.plot_iterations(r("sym_cg"), r("sym_cg_ilu"); Plotter = Plots,
+    algorithms = ["CG", "CG-ILU-drop-0.01", "CG-ILU-drop-0.1", "CG-ILU0"],
+    save_figure = true, title_figure = "sym_mp_cg_ilu_iters.pdf")
+
+Figures.plot_iterations(r("sym_cg"), r("sym_cg_amgcl"); Plotter = Plots,
+           algorithms = ["CG", "CG-AMGCL-RS-SPAI0", "CG-AMGCL-SA-SPAI0", "CG-AMGCL-RS-ILU0", "CG-AMGCL-SA-ILU0"],
+           save_figure = true, title_figure = "sym_mp_cg_amgcl_iters.pdf")
+
+Figures.plot_iterations(r("sym_cg"), r("sym_cg_amg_1d"), r("sym_cg_amg_23d"); Plotter = Plots,
+           algorithms = ["CG", "CG-AMG-RS", "CG-AMG-SA"],
+           save_figure = true, title_figure = "sym_mp_cg_amg_iters.pdf")
+
+Figures.plot_iterations(r("sym_cg"), r("sym_cg_pyamg"); Plotter = Plots,
+           algorithms = ["CG", "CG-PyAMG-RS", "CG-PyAMG-SA"],
+           save_figure = true, title_figure = "sym_mp_cg_pyamg_iters.pdf")
+```
+
+
+
+
+
+
+
 
 ### Tables
 
