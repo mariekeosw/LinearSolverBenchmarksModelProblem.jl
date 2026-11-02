@@ -13,6 +13,10 @@ maximal refinement; the results are then written to results_test/:
 To run a single benchmark, use `benchmark` directly (see README).
 
 All solvers run single-threaded, so that they are compared under the same conditions.
+
+SCALED selects the model matrix (see src/matrices.jl): true for the finite volume scaling
+L + δh²I (results/), false for the unscaled matrix L + δI (results_unscaled/). Existing result
+files are not overwritten; move or delete them first.
 =#
 
 # Must be set before AMGCL (OpenMP) and MKLPardiso are loaded
@@ -55,19 +59,31 @@ const BENCHMARKS = [
     ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3], "nsym_amg"),
 ]
 
+# Model matrix L + δh²I (true) or L + δI (false)
+const SCALED = true
+# Larger refinements of a solver configuration are skipped after a solve exceeds this time (s)
+const TIME_LIMIT = 600.0
+
 const JOB = length(ARGS) >= 1 ? ARGS[1] : "all"
 const MAX_REFINEMENT = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : nothing
-const OUTDIR = isnothing(MAX_REFINEMENT) ? "results" : "results_test"
+const OUTDIR = !isnothing(MAX_REFINEMENT) ? "results_test" : SCALED ? "results" : "results_unscaled"
 JOB == "all" || JOB in last.(BENCHMARKS) || JOB in first.(BENCHMARKS) || error("Unknown job or benchmark $JOB")
 mkpath(OUTDIR)
 
-for (name, configs, symmetric, refinement_max, dimensions, job) in BENCHMARKS
-    JOB == "all" || JOB == job || JOB == name || continue
+const SELECTED = filter(b -> JOB == "all" || JOB == b[6] || JOB == b[1], BENCHMARKS)
+
+# Do not overwrite results of a full run (test runs in results_test/ are overwritten)
+if isnothing(MAX_REFINEMENT)
+    existing = filter(isfile, [joinpath(OUTDIR, b[1] * ".jld2") for b in SELECTED])
+    isempty(existing) || error("Result files exist, move or delete them first: $existing")
+end
+
+for (name, configs, symmetric, refinement_max, dimensions, job) in SELECTED
     isnothing(MAX_REFINEMENT) || (refinement_max = min(refinement_max, MAX_REFINEMENT))
 
     # Small warm-up run so that compilation time is not included in the measurements
-    benchmark(tempname() * ".jld2", configs; symmetric, dimensions, refinement_max = 0)
+    benchmark(tempname() * ".jld2", configs; symmetric, dimensions, refinement_max = 0, scaled = SCALED)
 
-    t = @elapsed benchmark(joinpath(OUTDIR, name * ".jld2"), configs; symmetric, dimensions, refinement_max)
+    t = @elapsed benchmark(joinpath(OUTDIR, name * ".jld2"), configs; symmetric, dimensions, refinement_max, scaled = SCALED, time_limit = TIME_LIMIT)
     @info "$name took $(round(t; digits = 1)) seconds"
 end
