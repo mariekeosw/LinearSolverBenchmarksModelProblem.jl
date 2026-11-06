@@ -1,22 +1,23 @@
 #=
-Runs the benchmarks of the paper and writes one .jld2 file per benchmark to results/.
+Runs the benchmarks of the paper and writes one .jld2 file per benchmark.
 
-    julia --project scripts/run_benchmarks.jl [job] [max_refinement]
+    julia --project scripts/run_benchmarks.jl [job] [max_refinement] [unscaled|scaled]
 
 `job` selects the benchmarks: "all" (default), a job (last column of BENCHMARKS:
-"sym_pardiso", "sym", "sym_amg", "sym_pyamg" and the same for "nsym") or a single benchmark by its file
-name, e.g. "sym_cg_ilu". benchmark.sub runs the jobs in parallel. For a quick test, pass a
-maximal refinement; the results are then written to results_test/:
+"sym_pardiso", "sym", "sym_amg", "sym_pyamg" and the same for "nsym") or a single benchmark by
+its file name, e.g. "sym_cg_ilu". benchmark.sub runs the jobs in parallel.
 
-    julia --project scripts/run_benchmarks.jl all 6
+The matrix variant (see src/matrices.jl) is "unscaled" (default, L + δI, results in results/)
+or "scaled" (L + δh²I, results in results_scaled/). For the scaled matrix, 1D is restricted to
+refinement MAX_REFINEMENT_1D_SCALED, since all solvers lose accuracy for larger 1D problems.
 
-To run a single benchmark, use `benchmark` directly (see README).
+For a quick test, pass a maximal refinement; the results are then written to results_test/
+(or results_test_scaled/), which are overwritten:
 
+    julia --project scripts/run_benchmarks.jl all 6 scaled
+
+Results of a full run are never overwritten; move or delete existing files first.
 All solvers run single-threaded, so that they are compared under the same conditions.
-
-SCALED selects the model matrix (see src/matrices.jl): true for the finite volume scaling
-L + δh²I (results/), false for the unscaled matrix L + δI (results_unscaled/). Existing result
-files are not overwritten; move or delete them first.
 =#
 
 # Must be set before AMGCL (OpenMP) and MKLPardiso are loaded
@@ -59,20 +60,26 @@ const BENCHMARKS = [
     ("nsym_krylov_pyamg", nsym_solver_configs_krylov_pyamg, false, 22, [1, 2, 3], "nsym_pyamg"),
 ]
 
-# Model matrix L + δh²I (true) or L + δI (false)
-const SCALED = true
 # Larger refinements of a solver configuration are skipped after a solve exceeds this time (s)
 const TIME_LIMIT = 600.0
+# Scaled matrix in 1D: κ ≈ 400 n², so the relative residual of any solver is limited to about
+# ε_mach * 400 n² (≈ 1e-4 at refinement 12, N ≈ 4e4)
+const MAX_REFINEMENT_1D_SCALED = 12
 
-const JOB = length(ARGS) >= 1 ? ARGS[1] : "all"
-const MAX_REFINEMENT = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : nothing
-const OUTDIR = !isnothing(MAX_REFINEMENT) ? "results_test" : SCALED ? "results" : "results_unscaled"
+# Arguments in any order: job, maximal refinement (integer), matrix variant
+const SCALED = "scaled" in ARGS
+const ARGS_INT = filter(a -> !isnothing(tryparse(Int, a)), ARGS)
+const ARGS_JOB = filter(a -> isnothing(tryparse(Int, a)) && !(a in ("scaled", "unscaled")), ARGS)
+const JOB = isempty(ARGS_JOB) ? "all" : only(ARGS_JOB)
+const MAX_REFINEMENT = isempty(ARGS_INT) ? nothing : parse(Int, only(ARGS_INT))
+const OUTDIR = (isnothing(MAX_REFINEMENT) ? "results" : "results_test") * (SCALED ? "_scaled" : "")
 JOB == "all" || JOB in last.(BENCHMARKS) || JOB in first.(BENCHMARKS) || error("Unknown job or benchmark $JOB")
+@info "Job $JOB, $(SCALED ? "scaled" : "unscaled") matrix, results in $OUTDIR"
 mkpath(OUTDIR)
 
 const SELECTED = filter(b -> JOB == "all" || JOB == b[6] || JOB == b[1], BENCHMARKS)
 
-# Do not overwrite results of a full run (test runs in results_test/ are overwritten)
+# Do not overwrite results of a full run (test runs are overwritten)
 if isnothing(MAX_REFINEMENT)
     existing = filter(isfile, [joinpath(OUTDIR, b[1] * ".jld2") for b in SELECTED])
     isempty(existing) || error("Result files exist, move or delete them first: $existing")
@@ -84,6 +91,7 @@ for (name, configs, symmetric, refinement_max, dimensions, job) in SELECTED
     # Small warm-up run so that compilation time is not included in the measurements
     benchmark(tempname() * ".jld2", configs; symmetric, dimensions, refinement_max = 0, scaled = SCALED)
 
-    t = @elapsed benchmark(joinpath(OUTDIR, name * ".jld2"), configs; symmetric, dimensions, refinement_max, scaled = SCALED, time_limit = TIME_LIMIT)
+    refinement_max_1d = SCALED ? min(refinement_max, MAX_REFINEMENT_1D_SCALED) : refinement_max
+    t = @elapsed benchmark(joinpath(OUTDIR, name * ".jld2"), configs; symmetric, dimensions, refinement_max, refinement_max_1d, scaled = SCALED, time_limit = TIME_LIMIT)
     @info "$name took $(round(t; digits = 1)) seconds"
 end

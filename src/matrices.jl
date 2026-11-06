@@ -18,13 +18,17 @@ lattice(L...; Tv = Float64) = lattice(L[1]; Tv) ⊕ lattice(L[2:end]...; Tv)
 # Create a matrix with the structure of a cell-centered finite volume discretization of
 # ``-Δu + δu`` with homogeneous Neumann boundary conditions in the `dim`-dimensional unit cube
 # with approximately N unknowns: n = ceil(N^(1/dim)) cells per direction, mesh size h = 1/n.
-# Up to the factor h^(dim-2), the finite volume matrix is L + δh²I (`scaled = true`), whose
-# condition number grows like h^(-2). With `scaled = false`, the reaction term is not scaled,
-# L + δI, as in benchmarks/sparselu.jl of LinearSolve.jl; its condition number is bounded by
-# (4dim + δ)/δ independently of N. Both matrices are strictly diagonally dominant M-matrices.
+#
+# Default (`scaled = false`): L + δI, as in benchmarks/sparselu.jl of LinearSolve.jl. The
+# reaction term is not scaled with h², so the matrix is strictly diagonally dominant by the
+# fixed margin δ and its condition number is bounded by (4dim + δ)/δ independently of N.
+#
+# Alternative (`scaled = true`): L + δh²I, which is the finite volume matrix up to the factor
+# h^(dim-2). Its condition number grows like 4dim/(δh²). In 1D, the solution is then only
+# accurate to about ε_mach * 4/(δh²) for any solver, i.e. useless from N ≈ 10^5 on.
 
 # Creates a symmetric matrix
-function fdmatrix_sym(N; dim = 2, Tv = Float64, δ = 1.0e-2, scaled = true)
+function fdmatrix_sym(N; dim = 2, Tv = Float64, δ = 1.0e-2, scaled = false)
     n = N^(1 / dim) |> ceil |> Int
     reaction = scaled ? δ / n^2 : δ
     A = lattice([n for i in 1:dim]...; Tv) + Tv(reaction) * I
@@ -34,7 +38,7 @@ end
 # Creates a reproducible non-symmetric matrix.
 # The diagonal entries of D are randomly selected from
 # {0.8, 0.801, ..., 1.2} using a fixed random seed.
-function fdmatrix_nsym(N; dim = 2, Tv = Float64, δ = 1.0e-2, scaled = true, skew = 0.2, rng_seed = 123)
+function fdmatrix_nsym(N; dim = 2, Tv = Float64, δ = 1.0e-2, scaled = false, skew = 0.2, rng_seed = 123)
     n = N^(1 / dim) |> ceil |> Int
     rng = MersenneTwister(rng_seed)
     diagonal_entries = rand(rng, (1 - skew):0.001:(1 + skew), n^dim)

@@ -6,12 +6,10 @@ This repository contains the code, the benchmark results and the post-processing
 
 ## Model problem and solvers
 
-The matrices have the structure of a cell-centered finite volume discretization of $-\Delta u + \delta u = f$ on $(0,1)^d$ with homogeneous Neumann boundary conditions, $\delta = 10^{-2}$, $n$ cells per direction and mesh size $h = 1/n$ (`src/matrices.jl`):
+The matrices have the structure of a cell-centered finite volume discretization of $-\Delta u + \delta u = f$ on $(0,1)^d$ with homogeneous Neumann boundary conditions, $\delta = 10^{-2}$, $n$ cells per direction and mesh size $h = 1/n$ (`src/matrices.jl`). Two variants are available:
 
-- symmetric: $A_\mathrm{sym} = L_{d,n} + \delta h^2 I$ (`fdmatrix_sym`),
-- nonsymmetric: $A_\mathrm{nsym} = L_{d,n} D + \delta h^2 I$ with a random diagonal $D$, $d_i \in \{0.8, 0.801, \dots, 1.2\}$, fixed seed (`fdmatrix_nsym`).
-
-Up to the factor $h^{d-2}$, $A_\mathrm{sym}$ is the finite volume matrix, and its condition number grows like $h^{-2}$. With `scaled = false`, the reaction term is not scaled ($L_{d,n} + \delta I$, as in [`benchmarks/sparselu.jl`](https://github.com/SciML/LinearSolve.jl/blob/main/benchmarks/sparselu.jl) of LinearSolve.jl); then the condition number is bounded by $(4d + \delta)/\delta$ independently of $N$. The results for this unscaled matrix are in `results_unscaled/` (figures in `figures_unscaled/`).
+- **unscaled** (default, results in `results/`, figures in `figures/`): $A_\mathrm{sym} = L_{d,n} + \delta I$ (`fdmatrix_sym`) and $A_\mathrm{nsym} = L_{d,n} D + \delta I$ with a random diagonal $D$, $d_i \in \{0.8, 0.801, \dots, 1.2\}$, fixed seed (`fdmatrix_nsym`), as in [`benchmarks/sparselu.jl`](https://github.com/SciML/LinearSolve.jl/blob/main/benchmarks/sparselu.jl) of LinearSolve.jl. The matrices are strictly diagonally dominant by the fixed margin $\delta$, and the condition number of $A_\mathrm{sym}$ is bounded by $(4d + \delta)/\delta$ independently of $N$.
+- **scaled** (`scaled = true`, results in `results_scaled/`): $L_{d,n} + \delta h^2 I$ and $L_{d,n} D + \delta h^2 I$. Up to the factor $h^{d-2}$, $A_\mathrm{sym}$ is the finite volume matrix, and its condition number grows like $4d/(\delta h^2)$. In 1D, every solver can then only reach a relative residual of about $\varepsilon_\mathrm{mach} \cdot 400\, n^2$, so 1D is restricted to refinement 12 ($N \approx 4 \cdot 10^4$).
 
 All solvers are accessed through [`LinearSolve.jl`](https://github.com/SciML/LinearSolve.jl) (`src/solvers.jl`):
 
@@ -22,7 +20,7 @@ All solvers are accessed through [`LinearSolve.jl`](https://github.com/SciML/Lin
 | Incomplete factorizations | ILU(0) from [`ILUZero.jl`](https://github.com/mcovalt/ILUZero.jl), threshold ILU (drop tolerances 0.01 and 0.1) from [`IncompleteLU.jl`](https://github.com/haampie/IncompleteLU.jl) |
 | Algebraic multigrid | Ruge–Stüben and smoothed aggregation from [`AMGCLWrap.jl`](https://github.com/j-fu/AMGCLWrap.jl) (with SPAI(0) or ILU(0) relaxation), [`AlgebraicMultigrid.jl`](https://github.com/JuliaLinearAlgebra/AlgebraicMultigrid.jl) and [`LinearSolvePyAMG.jl`](https://github.com/SciML/LinearSolve.jl/tree/main/lib/LinearSolvePyAMG) |
 
-All solvers run single-threaded (`scripts/run_benchmarks.jl` sets `OMP_NUM_THREADS`, `MKL_NUM_THREADS` and the BLAS threads to 1). The linear solver runtime (setup + solve) is measured with [`BenchmarkTools.jl`](https://github.com/JuliaCI/BenchmarkTools.jl) (minimum over at most 10 samples within 0.5 s; all solvers are compiled in a small warm-up run beforehand, so no extra warm-up evaluation is needed). The number of Krylov iterations, the return code, the relative residual and the mean of the solution are taken from the solution of the last timed sample (`src/benchmark.jl`). The maximal number of Krylov iterations is $100N$. If a solve takes longer than 10 minutes, the larger problem sizes of this solver configuration and dimension are skipped (`TIME_LIMIT` in `scripts/run_benchmarks.jl`).
+All solvers run single-threaded (`scripts/run_benchmarks.jl` sets `OMP_NUM_THREADS`, `MKL_NUM_THREADS` and the BLAS threads to 1). The linear solver runtime (setup + solve) is measured with [`BenchmarkTools.jl`](https://github.com/JuliaCI/BenchmarkTools.jl) (minimum over at most 10 samples within 0.5 s; all solvers are compiled in a small warm-up run beforehand, so no extra warm-up evaluation is needed). The number of Krylov iterations, the return code, the relative residual and the mean of the solution are taken from the solution of the last timed sample (`src/benchmark.jl`). The maximal number of Krylov iterations is $10^5$. If a solve takes longer than 10 minutes, the larger problem sizes of this solver configuration and dimension are skipped (`TIME_LIMIT` in `scripts/run_benchmarks.jl`).
 
 ## Structure
 
@@ -36,7 +34,8 @@ scripts/run_benchmarks.jl                 all benchmarks of the paper
 postprocess/figures.jl                    plot_runtimes, plot_iterations
 postprocess/tables.jl                     LaTeX tables
 results/                                  benchmark results (.jld2), created by scripts/run_benchmarks.jl
-results_unscaled/, figures_unscaled/      results and figures for the unscaled matrix L + δI
+results_scaled/                           benchmark results for the scaled matrix L + δh²I
+figures/                                  figures
 benchmark.sh, benchmark.sub               job script and HTCondor submit file
 ```
 
@@ -72,9 +71,9 @@ returns `(problem_size, runtime, niters, retcode, residual, testval)`. The targe
 benchmark("sym_cg_ilu_example.jld2", sym_solver_configs_cg_ilu; symmetric = true, dimensions = [1, 2, 3], refinement_max = 10)
 ```
 
-The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and writes the results to `results/`; the result files are updated after every solve. `julia --project scripts/run_benchmarks.jl sym_amg` runs only one job (`sym_pardiso`, `sym`, `sym_amg`, `sym_pyamg` and the same for `nsym`) or a single benchmark by its file name (e.g. `sym_cg_ilu`). `julia --project scripts/run_benchmarks.jl all 6` runs all benchmarks up to refinement 6 and writes to `results_test/`, as a quick test. `SCALED` in `scripts/run_benchmarks.jl` selects the matrix: `true` for $L_{d,n} + \delta h^2 I$ (`results/`), `false` for $L_{d,n} + \delta I$ (`results_unscaled/`). Existing result files are not overwritten.
+The solver configurations are defined in `src/solvers.jl`. `julia --project scripts/run_benchmarks.jl` runs all benchmarks of the paper and writes the results to `results/`; the result files are updated after every solve. `julia --project scripts/run_benchmarks.jl sym_amg` runs only one job (`sym_pardiso`, `sym`, `sym_amg`, `sym_pyamg` and the same for `nsym`) or a single benchmark by its file name (e.g. `sym_cg_ilu`). `julia --project scripts/run_benchmarks.jl all 6` runs all benchmarks up to refinement 6 and writes to `results_test/`, as a quick test. The argument `scaled` selects the scaled matrix (`results_scaled/`, `results_test_scaled/`), e.g. `julia --project scripts/run_benchmarks.jl sym_amg scaled`. Existing result files of a full run are not overwritten.
 
-On the HTCondor cluster, submit from the repository directory: `condor_submit benchmark.sub` runs the jobs selected in its queue block in parallel on the same node (full run), `condor_submit benchmark.sub -append "max_refinement = 6"` runs a test.
+On the HTCondor cluster, submit from the repository directory: `condor_submit benchmark.sub` runs the jobs selected in its queue block in parallel on the same node (full run), `condor_submit benchmark.sub -append "max_refinement = 6"` runs a test, and `-append "variant = scaled"` selects the scaled matrix.
 
 A result file contains `labels`, `dimensions`, `refinement`, `problem_sizes`, `tlinsolves` (runtimes), `niters`, `retcodes`, `residuals`, `tests`, `scaled` (matrix scaling) and `environment` (Julia version, CPU and thread settings). Results are dictionaries with keys `(dimension, label)`.
 
