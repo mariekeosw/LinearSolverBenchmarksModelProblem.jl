@@ -46,14 +46,15 @@ function run_single(alg; symmetric = true, dimension = 2, refinement = 5, rng_se
     # The Ref stores the solution of the last sample; this does not change the measured runtime.
     sol_ref = Ref{Any}(nothing)
     timing = @benchmarkable begin
-        cache = init($prob, $alg; maxiters = $MAXITERS)
+        cache = init($prob, $alg; maxiters = $MAXITERS, verbose = false)
         $sol_ref[] = solve!(cache)
     end samples = 10 evals = 1 seconds = 0.5 gctrial = false
     runtime = minimum(run(timing)).time / 1.0e9 # ns -> s
 
     sol = sol_ref[]
     # Krylov.jl reports a stop by the callback as "user-requested exit", which LinearSolve.jl
-    # turns into ReturnCode.Failure; here it means that the stopping criterion is satisfied.
+    # turns into ReturnCode.Failure (with a "Solver failed" warning, hence verbose = false in
+    # init); here it means that the stopping criterion is satisfied. All return codes are stored.
     stopped_by_criterion = hasproperty(sol.stats, :status) && sol.stats.status == "user-requested exit"
     return (;
         problem_size = N,
