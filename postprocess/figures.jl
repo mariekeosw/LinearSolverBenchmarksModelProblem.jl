@@ -273,8 +273,8 @@ function plot_iterations(
         algorithms = nothing,
         active_dimensions = nothing,
         references = [],
-        ylims = (0.9e0, 1.0e3),
-        yticks = 10.0 .^ (0:1:3),
+        ylims = (0.9e0, 0.6e5), # 1.0e3 bei unscaled
+        yticks = 10.0 .^ (0:1:5), # 3 bei unscaled
         xlims = (0.7e1, 0.7e8),
         save_figure = false,
         title_figure = nothing,
