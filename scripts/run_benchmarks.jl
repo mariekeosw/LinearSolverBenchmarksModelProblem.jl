@@ -4,7 +4,7 @@ Runs the benchmarks of the paper and writes one .jld2 file per benchmark.
     julia --project scripts/run_benchmarks.jl [job] [max_refinement] [unscaled|scaled]
 
 `job` selects the benchmarks: "all" (default), a job (last column of BENCHMARKS:
-"sym_pardiso", "sym", "sym_amg", "sym_pyamg" and the same for "nsym") or a single benchmark by
+"sym_pardiso", "sym_direct", "sym" (CG, ILU), "sym_amg", "sym_pyamg" and the same for "nsym") or a single benchmark by
 its file name, e.g. "sym_cg_ilu". benchmark.sub runs the jobs in parallel.
 
 The matrix variant (see src/matrices.jl) is "unscaled" (default, L + δI, results in results/)
@@ -38,7 +38,7 @@ Pardiso.LOCAL_MKL_FOUND && error("Pardiso.jl was built with a system MKL (MKLROO
 # (file name, solver configurations, symmetric, maximal refinement, dimensions, job)
 const BENCHMARKS = [
     # Symmetric problem
-    ("sym_direct", solver_configs_direct, true, 15, [1, 2, 3], "sym"),
+    ("sym_direct", solver_configs_direct, true, 15, [1, 2, 3], "sym_direct"),
     # MKLPardiso: in 3D, refinement 19 needs more than 250 GB (results end at refinement 18)
     ("sym_direct_pardiso", solver_configs_direct_pardiso, true, 19, [1, 2, 3], "sym_pardiso"),
     ("sym_cg", sym_solver_configs_cg, true, 22, [1, 2, 3], "sym"),
@@ -48,7 +48,7 @@ const BENCHMARKS = [
     ("sym_cg_amg_23d", sym_solver_configs_cg_amg, true, 22, [2, 3], "sym_amg"),
     ("sym_cg_pyamg", sym_solver_configs_cg_pyamg, true, 22, [1, 2, 3], "sym_pyamg"),
     # Nonsymmetric problem
-    ("nsym_direct", solver_configs_direct, false, 15, [1, 2, 3], "nsym"),
+    ("nsym_direct", solver_configs_direct, false, 15, [1, 2, 3], "nsym_direct"),
     ("nsym_direct_pardiso", solver_configs_direct_pardiso, false, 19, [1, 2, 3], "nsym_pardiso"),
     ("nsym_krylov", nsym_solver_configs_krylov, false, 22, [1, 2, 3], "nsym"),
     ("nsym_krylov_ilu", nsym_solver_configs_krylov_ilu, false, 22, [1, 2, 3], "nsym"),

@@ -11,6 +11,23 @@
 # src/matrices.jl. The maximal number of Krylov iterations is MAXITERS instead of the default N
 # of LinearSolve.jl, since CG needs more than N iterations for the scaled matrix in 1D.
 const MAXITERS = 100_000
+
+# All Krylov methods stop at the same criterion ‖b - Au_k‖₂ ≤ RELTOL ‖b‖₂, evaluated with the
+# unpreconditioned residual r that Krylov.jl updates in every iteration (field `r` of the CG
+# and BiCGSTAB workspaces). Krylov.jl's own criterion is switched off (atol = rtol = 0): for
+# preconditioned CG it uses the norm ‖r‖_{M⁻¹}, which depends on the preconditioner.
+# TIMEMAX (s) ends a single solve that does not converge.
+const RELTOL = 1.0e-8
+const TIMEMAX = 3600.0
+euclidean_stopping(alg, tol) = alg
+function euclidean_stopping(alg::KrylovJL, tol)
+    callback = workspace -> norm(workspace.r) ≤ tol
+    return KrylovJL(
+        alg.args...; KrylovAlg = alg.KrylovAlg, gmres_restart = alg.gmres_restart, window = alg.window,
+        warm_start = alg.warm_start, precs = alg.precs, alg.kwargs..., atol = 0.0, rtol = 0.0, timemax = TIMEMAX, callback
+    )
+end
+
 function run_single(alg; symmetric = true, dimension = 2, refinement = 5, rng_seed = 123, scaled = false)
     target_problem_size = 10 * 2^refinement
     A = symmetric ? fdmatrix_sym(target_problem_size; dim = dimension, scaled) : fdmatrix_nsym(target_problem_size; dim = dimension, scaled)
@@ -21,6 +38,7 @@ function run_single(alg; symmetric = true, dimension = 2, refinement = 5, rng_se
     u0 = rand(rng, N)
 
     prob = LinearProblem(copy(A), copy(b); u0 = copy(u0), alias = LinearAliasSpecifier(alias_A = true, alias_b = true))
+    alg = euclidean_stopping(alg, RELTOL * norm(b))
 
     # Free the memory of previous solves and of the matrix assembly (not timed). Garbage
     # collection is not triggered before each sample (many small benchmarks).
@@ -34,11 +52,14 @@ function run_single(alg; symmetric = true, dimension = 2, refinement = 5, rng_se
     runtime = minimum(run(timing)).time / 1.0e9 # ns -> s
 
     sol = sol_ref[]
+    # Krylov.jl reports a stop by the callback as "user-requested exit", which LinearSolve.jl
+    # turns into ReturnCode.Failure; here it means that the stopping criterion is satisfied.
+    stopped_by_criterion = hasproperty(sol.stats, :status) && sol.stats.status == "user-requested exit"
     return (;
         problem_size = N,
         runtime,
         niters = sol.iters, # 0 for direct solvers and PyAMG, which do not report iterations
-        retcode = string(sol.retcode),
+        retcode = stopped_by_criterion ? "Success" : string(sol.retcode),
         residual = norm(A * sol.u - b) / norm(b),
         testval = sum(sol.u) / N,
     )

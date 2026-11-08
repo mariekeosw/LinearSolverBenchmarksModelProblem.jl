@@ -1,5 +1,5 @@
 # Runs the benchmarks of the paper as parallel jobs (see scripts/run_benchmarks.jl). A job is
-# a group of benchmarks (sym_pardiso, sym, sym_amg, sym_pyamg and the same for nsym) or a single
+# a group of benchmarks (sym_pardiso, sym_direct, sym, sym_amg, sym_pyamg and the same for nsym) or a single
 # benchmark by its file name (e.g. sym_cg_ilu). Each job runs single-threaded on reserved
 # cores. All jobs run on the same node, so that all runtimes are measured on the same hardware.
 # Select the jobs in the queue block at the end.
@@ -29,12 +29,16 @@ max_refinement          =
 variant                 = unscaled
 
 # memory: peak memory of the largest problem (3D) plus a margin
+# Direct solvers do not depend on the stopping criterion of the Krylov methods, so only the
+# iterative solvers (sym, sym_amg) are queued.
 queue job, memory from (
-    sym_pardiso, 250GB
+#   sym_pardiso, 250GB
+#   sym_direct, 50GB
     sym, 100GB
     sym_amg, 100GB
 #   sym_pyamg, 100GB
 #   nsym_pardiso, 250GB
+#   nsym_direct, 50GB
 #   nsym, 100GB
 #   nsym_amg, 100GB
 #   nsym_pyamg, 100GB
